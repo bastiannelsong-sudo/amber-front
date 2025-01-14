@@ -1,20 +1,18 @@
+// src/App.jsx
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 
-import Dashboard from './pages/Dashboard';
-import AuthCallback from './pages/AuthCallback';
-import Login from './pages/Login';
+function App() {
+  const handleLogin = () => {
+    // Redirige al backend para obtener la URL de autenticación
+    window.location.href = 'http://localhost:3000/auth/login'; // URL de login del backend
+  };
 
-const App = () => {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/authcallback" element={<AuthCallback />} />
-      </Routes>
-    </Router>
+    <div>
+      <h1>Login con Mercado Libre</h1>
+      <button onClick={handleLogin}>Iniciar sesión</button>
+    </div>
   );
-};
+}
 
 export default App;
