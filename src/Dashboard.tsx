@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 function Dashboard() {
   const [userInfo, setUserInfo] = useState(null);
 
   useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    console.log(token)
-    if (token) {
-      fetch(`http://localhost:3000/auth/user-info?token=${token}`)
+    const userId = sessionStorage.getItem('userId');
+    if (userId) {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
+      fetch(`${backendUrl}/auth/user-info?userId=${userId}`)
         .then((response) => response.json())
         .then((data) => {
           setUserInfo(data);

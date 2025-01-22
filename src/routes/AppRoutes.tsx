@@ -1,7 +1,4 @@
-// src/routes/AppRoutes.tsx
-import React from 'react';
-
-const AppRoutes = () => {
+    const AppRoutes = () => {
   return (
     <div>
       <h1>App Routes</h1>
