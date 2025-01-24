@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",                     // Permite la compatibilidad con el estándar más reciente.
+    "module": "ESNext",                     // Para permitir el uso de 'import.meta'.
+    "lib": ["dom", "esnext"],               // Incluye las librerías necesarias.
+    "jsx": "react-jsx",                     // Para habilitar JSX en React (para React 17 o superior).
+    "moduleResolution": "node",             // Asegura que TypeScript resuelva correctamente los módulos.
+    "strict": true,                          // Para tener un chequeo más estricto de tipos (opcional).
+    "esModuleInterop": true,                // Para una mejor interoperabilidad con módulos ES.
+    "resolveJsonModule": true               // Permite la importación de archivos JSON si es necesario.
+  }
+}

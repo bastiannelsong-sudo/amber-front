@@ -1,17 +1,17 @@
-// src/main.jsx
-import React from 'react';
+import { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import App from './App';
-import Callback from './Callback';
-import Dashboard from './Dashboard';
+import AppRoutes from './routes/AppRoutes';
+import './index.css';
+
+function App() {
+    useEffect(() => {
+        // Establecer el modo oscuro por defecto
+        document.body.classList.add('dark');
+    }, []);
+
+    return <AppRoutes />;
+}
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <Router>
-    <Routes>
-      <Route path="/" element={<App />} />
-      <Route path="/callback" element={<Callback />} />
-      <Route path="/dashboard" element={<Dashboard/>} />
-    </Routes>
-  </Router>
+    <App />
 );

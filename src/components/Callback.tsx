@@ -9,7 +9,7 @@ function Callback() {
     const userId = localStorage.getItem('userId');
 
     if (userId) {
-      navigate('/dashboard');
+      navigate('/inventario');
     } else {
       const urlParams = new URLSearchParams(window.location.search);
       const userId = urlParams.get('userId');
@@ -19,7 +19,7 @@ function Callback() {
         sessionStorage.setItem("userId", userId);
 
 
-        navigate('/dashboard');
+        navigate('/inventario');
       } else {
         navigate('/');
       }
