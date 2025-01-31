@@ -6,6 +6,10 @@ export interface SecondarySku {
   publication_link: string;
 }
 
+export interface Category {
+  platform_id: number,
+  platform_name: string;
+}
 
 export interface Product {
   product_id: number;
@@ -15,4 +19,5 @@ export interface Product {
   to_repair: number;
   total: number;
   secondarySkus: SecondarySku[];
+  category: Category;
 }
