@@ -1,4 +1,3 @@
-
 export interface SecondarySku {
   secondary_sku_id: number;
   secondary_sku: string;
@@ -7,7 +6,7 @@ export interface SecondarySku {
 }
 
 export interface Category {
-  platform_id: number,
+  platform_id: number;
   platform_name: string;
 }
 
@@ -20,4 +19,9 @@ export interface Product {
   total: number;
   secondarySkus: SecondarySku[];
   category: Category;
+}
+
+export interface Platform {
+  platform_id: number;
+  platform_name: string;
 }
