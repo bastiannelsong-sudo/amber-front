@@ -1,18 +1,19 @@
 import type { FC } from "react";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Spinner } from "flowbite-react";
 import { useAuthStore } from "../../store/authStore";
 
 const Callback: FC = function () {
   const navigate = useNavigate();
+  const location = useLocation();
   const setUser = useAuthStore((state) => state.setUser);
 
   useEffect(() => {
     // Verificar si ya se procesó el callback
-    const callbackProcessed = sessionStorage.getItem("callbackProcessed");
+    const callbackProcessed = localStorage.getItem("callbackProcessed");
     if (callbackProcessed) {
-      navigate("/productos");
+      navigate("/sales");
       return;
     }
 
@@ -27,16 +28,17 @@ const Callback: FC = function () {
       setUser({ userId, nickname, email });
 
       // Marcar callback como procesado
-      sessionStorage.setItem("callbackProcessed", "true");
+      localStorage.setItem("callbackProcessed", "true");
 
-      // Redirigir a productos
-      navigate("/productos");
+      // Redirigir a la ruta original o a /sales por defecto
+      const from = (location.state as { from?: string })?.from || "/sales";
+      navigate(from);
     } else {
       // Si no hay parámetros, redirigir a login
       console.error("Parámetros de autenticación faltantes");
-      navigate("/");
+      navigate("/login");
     }
-  }, [navigate, setUser]);
+  }, [navigate, setUser, location.state]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">

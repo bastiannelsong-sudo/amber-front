@@ -12,18 +12,18 @@ export const authService = {
     window.location.href = `${BASE_URL}/auth/login`;
   },
 
-  // Guardar datos del usuario en sessionStorage
+  // Guardar datos del usuario en localStorage
   setUser: (user: User): void => {
-    sessionStorage.setItem('userId', user.userId);
-    sessionStorage.setItem('nickname', user.nickname);
-    sessionStorage.setItem('email', user.email);
+    localStorage.setItem('userId', user.userId);
+    localStorage.setItem('nickname', user.nickname);
+    localStorage.setItem('email', user.email);
   },
 
-  // Obtener usuario actual desde sessionStorage
+  // Obtener usuario actual desde localStorage
   getUser: (): User | null => {
-    const userId = sessionStorage.getItem('userId');
-    const nickname = sessionStorage.getItem('nickname');
-    const email = sessionStorage.getItem('email');
+    const userId = localStorage.getItem('userId');
+    const nickname = localStorage.getItem('nickname');
+    const email = localStorage.getItem('email');
 
     if (!userId || !nickname || !email) {
       return null;
@@ -34,20 +34,20 @@ export const authService = {
 
   // Verificar si el usuario está autenticado
   isAuthenticated: (): boolean => {
-    return !!sessionStorage.getItem('userId');
+    return !!localStorage.getItem('userId');
   },
 
   // Cerrar sesión
   logout: (): void => {
-    sessionStorage.removeItem('userId');
-    sessionStorage.removeItem('nickname');
-    sessionStorage.removeItem('email');
-    sessionStorage.removeItem('callbackProcessed');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('nickname');
+    localStorage.removeItem('email');
+    localStorage.removeItem('callbackProcessed');
   },
 
   // Limpiar sesión (usado al entrar a login)
   clearSession: (): void => {
-    sessionStorage.clear();
+    localStorage.clear();
   },
 };
 
