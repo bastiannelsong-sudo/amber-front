@@ -607,14 +607,259 @@ body {
 /* ==========================================
    RESPONSIVE UTILITIES
    ========================================== */
+
+/* Tablet breakpoint */
+@media (max-width: 1024px) {
+  .text-display-lg {
+    font-size: 2.25rem;
+  }
+}
+
+/* Mobile breakpoint */
 @media (max-width: 768px) {
   .text-display-lg {
-    font-size: 2rem;
+    font-size: 1.75rem;
   }
 
   .text-display-md {
+    font-size: 1.375rem;
+  }
+
+  .text-display-sm {
+    font-size: 1.125rem;
+  }
+
+  .text-body {
+    font-size: 0.875rem;
+  }
+
+  /* Mobile buttons */
+  .btn-primary,
+  .btn-secondary {
+    padding: 10px 16px;
+    font-size: 0.875rem;
+  }
+
+  /* Hide desktop elements on mobile - IMPORTANT: use higher specificity */
+  .desktop-only,
+  div.desktop-only,
+  table.desktop-only {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Show mobile cards on mobile */
+  .mobile-only,
+  div.mobile-only {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  /* Hide filter label text on small screens */
+  .filter-label {
+    display: none !important;
+  }
+}
+
+/* Small mobile breakpoint */
+@media (max-width: 480px) {
+  .text-display-lg {
     font-size: 1.5rem;
   }
+
+  .text-display-md {
+    font-size: 1.25rem;
+  }
+
+  /* Compact buttons - hide text */
+  .btn-compact span:not(.btn-icon) {
+    display: none;
+  }
+
+  .btn-compact {
+    padding: 12px !important;
+  }
+}
+
+/* ==========================================
+   MOBILE SALES CARD COMPONENT
+   ========================================== */
+.mobile-order-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: all var(--transition-fast);
+}
+
+.mobile-order-card:active {
+  transform: scale(0.98);
+  background: var(--surface-hover);
+}
+
+.mobile-order-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.mobile-order-card-id {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mobile-order-card-time {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+.mobile-order-card-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.mobile-order-card-product {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.mobile-order-card-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.mobile-order-card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mobile-order-card-product-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-order-card-product-title {
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-order-card-product-qty {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.mobile-order-card-financials {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 12px;
+  background: var(--surface-subtle);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+}
+
+.mobile-order-card-financial-item {
+  text-align: center;
+}
+
+.mobile-order-card-financial-label {
+  font-family: var(--font-display);
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.mobile-order-card-financial-value {
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.mobile-order-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.mobile-order-card-profit {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-order-card-profit-value {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 800;
+}
+
+.mobile-order-card-profit-margin {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+}
+
+.mobile-order-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.mobile-order-card-action {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.mobile-order-card-action:active {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: #0a0a0b;
+}
+
+/* Hide mobile cards by default (shown via media query) */
+.mobile-only {
+  display: none;
 }
 
 /* Print styles */
@@ -623,5 +868,13 @@ body {
   .dashboard-root::after,
   .dashboard-grid-overlay {
     display: none;
+  }
+
+  .mobile-only {
+    display: none !important;
+  }
+
+  .desktop-only {
+    display: block !important;
   }
 }

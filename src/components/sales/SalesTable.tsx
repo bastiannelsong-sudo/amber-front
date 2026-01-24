@@ -426,6 +426,126 @@ const TableRow: FC<TableRowProps> = memo(({ order, onView }) => {
   );
 });
 
+// Mobile Order Card Component
+interface MobileOrderCardProps {
+  order: OrderSummary;
+  onView: () => void;
+}
+
+const MobileOrderCard: FC<MobileOrderCardProps> = memo(({ order, onView }) => {
+  const logisticConfig = LOGISTIC_CONFIG[order.logistic_type] || DEFAULT_LOGISTIC;
+  const effectiveStatus = order.is_cancelled && order.status === 'paid' ? 'in_mediation' : order.status;
+  const statusConfig = STATUS_CONFIG[effectiveStatus] || DEFAULT_STATUS;
+  const dateStr = order.date_created || order.date_approved;
+
+  return (
+    <div className="mobile-order-card">
+      {/* Header: Order ID, Time, Badges */}
+      <div className="mobile-order-card-header">
+        <div>
+          <div className="mobile-order-card-id">#{order.id}</div>
+          <div className="mobile-order-card-time">{formatTime(dateStr)}</div>
+        </div>
+        <div className="mobile-order-card-badges">
+          <span
+            style={{
+              padding: '4px 8px',
+              borderRadius: '6px',
+              fontSize: '0.6875rem',
+              fontWeight: 600,
+              backgroundColor: logisticConfig.bg,
+              color: logisticConfig.color,
+              border: `1px solid ${logisticConfig.color}25`,
+            }}
+          >
+            {logisticConfig.icon} {logisticConfig.label}
+          </span>
+          <span
+            style={{
+              padding: '4px 8px',
+              borderRadius: '6px',
+              fontSize: '0.6875rem',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              backgroundColor: statusConfig.bg,
+              color: statusConfig.color,
+              border: `1px solid ${statusConfig.color}25`,
+            }}
+          >
+            {statusConfig.label}
+          </span>
+        </div>
+      </div>
+
+      {/* Product Info */}
+      <div className="mobile-order-card-product">
+        <div className="mobile-order-card-thumb">
+          {order.items[0]?.thumbnail ? (
+            <img src={order.items[0].thumbnail} alt={order.items[0].title} loading="lazy" />
+          ) : (
+            <span style={{ fontSize: '20px' }}>📦</span>
+          )}
+        </div>
+        <div className="mobile-order-card-product-info">
+          <div className="mobile-order-card-product-title">{order.items[0]?.title || 'Sin descripción'}</div>
+          <div className="mobile-order-card-product-qty">
+            {order.items.length} {order.items.length === 1 ? 'producto' : 'productos'}
+          </div>
+        </div>
+      </div>
+
+      {/* Financial Summary */}
+      <div className="mobile-order-card-financials">
+        <div className="mobile-order-card-financial-item">
+          <div className="mobile-order-card-financial-label">Venta</div>
+          <div className="mobile-order-card-financial-value" style={{ color: 'var(--text-primary)' }}>
+            {formatCurrency(order.gross_amount)}
+          </div>
+        </div>
+        <div className="mobile-order-card-financial-item">
+          <div className="mobile-order-card-financial-label">Comisión</div>
+          <div className="mobile-order-card-financial-value" style={{ color: '#fb7185' }}>
+            -{formatCurrency(order.marketplace_fee)}
+          </div>
+        </div>
+        <div className="mobile-order-card-financial-item">
+          <div className="mobile-order-card-financial-label">IVA</div>
+          <div className="mobile-order-card-financial-value" style={{ color: '#fb923c' }}>
+            -{formatCurrency(order.iva_amount || 0)}
+          </div>
+        </div>
+      </div>
+
+      {/* Footer: Profit and Actions */}
+      <div className="mobile-order-card-footer">
+        <div className="mobile-order-card-profit">
+          <div
+            className="mobile-order-card-profit-value"
+            style={{ color: order.net_profit >= 0 ? 'var(--status-success)' : 'var(--status-error)' }}
+          >
+            {formatCurrency(order.net_profit)}
+          </div>
+          <div className="mobile-order-card-profit-margin">{order.profit_margin.toFixed(1)}% margen</div>
+        </div>
+        <div className="mobile-order-card-actions">
+          <button className="mobile-order-card-action" onClick={onView} title="Ver detalle">
+            <HiEye style={{ width: '18px', height: '18px' }} />
+          </button>
+          <a
+            href={`https://www.mercadolibre.cl/ventas/${order.pack_id || order.id}/detalle`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mobile-order-card-action"
+            title="Ver en ML"
+          >
+            <HiExternalLink style={{ width: '18px', height: '18px' }} />
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 // Empty State Component
 const EmptyState: FC = memo(() => (
   <div
@@ -507,109 +627,148 @@ const SalesTable: FC<Props> = ({ orders, onViewOrder }) => {
   }
 
   return (
-    <div
-      className="glass-card custom-scrollbar"
-      style={{ overflow: 'hidden' }}
-    >
-      {/* Table Wrapper */}
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1100px' }}>
-          {/* Header */}
-          <thead>
-            <tr
-              style={{
-                background: 'var(--table-header-bg)',
-              }}
-            >
-              {headers.map((header, idx) => (
-                <th
-                  key={header.label + idx}
-                  style={{
-                    padding: idx === 0 ? '14px 20px' : '14px 16px',
-                    textAlign: header.align,
-                    fontFamily: "'Outfit', sans-serif",
-                    fontSize: '0.6875rem',
-                    fontWeight: 700,
-                    color: 'var(--text-tertiary)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {header.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-
-          {/* Body */}
-          <tbody>
-            {orders.map((order) => (
-              <TableRow
-                key={order.id}
-                order={order}
-                onView={createViewHandler(order)}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Footer */}
+    <>
+      {/* Desktop Table View */}
       <div
-        style={{
-          padding: '14px 20px',
-          backgroundColor: 'var(--surface-elevated)',
-          borderTop: '1px solid var(--border-subtle)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
+        className="glass-card custom-scrollbar desktop-only"
+        style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
       >
-        <p
+        {/* Table Wrapper */}
+        <div style={{ overflowX: 'auto', flex: '1 1 auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1100px' }}>
+            {/* Header */}
+            <thead>
+              <tr
+                style={{
+                  background: 'var(--table-header-bg)',
+                }}
+              >
+                {headers.map((header, idx) => (
+                  <th
+                    key={header.label + idx}
+                    style={{
+                      padding: idx === 0 ? '14px 20px' : '14px 16px',
+                      textAlign: header.align,
+                      fontFamily: "'Outfit', sans-serif",
+                      fontSize: '0.6875rem',
+                      fontWeight: 700,
+                      color: 'var(--text-tertiary)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {header.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+
+            {/* Body */}
+            <tbody>
+              {orders.map((order) => (
+                <TableRow
+                  key={order.id}
+                  order={order}
+                  onView={createViewHandler(order)}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Footer */}
+        <div
           style={{
-            fontFamily: "'Outfit', sans-serif",
-            fontSize: '0.8125rem',
-            color: 'var(--text-tertiary)',
-            margin: 0,
+            padding: '14px 20px',
+            backgroundColor: 'var(--surface-elevated)',
+            borderTop: '1px solid var(--border-subtle)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexShrink: 0,
+            width: '100%',
           }}
         >
-          Mostrando{' '}
-          <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{orders.length}</span> órdenes
-        </p>
+          <p
+            style={{
+              fontFamily: "'Outfit', sans-serif",
+              fontSize: '0.8125rem',
+              color: 'var(--text-tertiary)',
+              margin: 0,
+            }}
+          >
+            Mostrando{' '}
+            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{orders.length}</span> órdenes
+          </p>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              fontSize: '0.75rem',
+              color: 'var(--text-tertiary)',
+              fontFamily: "'Outfit', sans-serif",
+            }}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--status-success)' }} />
+              Ganancia
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#38bdf8' }} />
+              Envío
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#fb7185' }} />
+              Comisión
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#fb923c' }} />
+              IVA
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#34d399' }} />
+              Bonif.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="mobile-only">
+        {/* Mobile Header */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '12px',
-            fontSize: '0.75rem',
-            color: 'var(--text-tertiary)',
-            fontFamily: "'Outfit', sans-serif",
+            justifyContent: 'space-between',
+            marginBottom: '12px',
+            padding: '0 4px',
           }}
         >
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--status-success)' }} />
-            Ganancia
-          </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#38bdf8' }} />
-            Envío
-          </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#fb7185' }} />
-            Comisión
-          </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#fb923c' }} />
-            IVA
-          </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#34d399' }} />
-            Bonif.
+          <span
+            style={{
+              fontFamily: "'Outfit', sans-serif",
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              color: 'var(--text-secondary)',
+            }}
+          >
+            {orders.length} {orders.length === 1 ? 'orden' : 'órdenes'}
           </span>
         </div>
+
+        {/* Mobile Cards */}
+        {orders.map((order) => (
+          <MobileOrderCard
+            key={order.id}
+            order={order}
+            onView={createViewHandler(order)}
+          />
+        ))}
       </div>
-    </div>
+    </>
   );
 };
 

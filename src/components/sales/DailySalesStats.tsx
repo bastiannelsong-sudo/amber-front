@@ -83,7 +83,7 @@ const StatCard: FC<StatCardProps> = memo(({
     className="stat-card glass-card"
     style={{
       position: 'relative',
-      padding: '20px',
+      padding: 'clamp(14px, 3vw, 20px)',
       borderRadius: '16px',
       overflow: 'hidden',
       transition: 'all 250ms',
@@ -106,17 +106,18 @@ const StatCard: FC<StatCardProps> = memo(({
     />
 
     {/* Top Row */}
-    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px', position: 'relative' }}>
+    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 'clamp(10px, 2vw, 16px)', position: 'relative', gap: '8px' }}>
       <div
         style={{
-          width: '44px',
-          height: '44px',
-          borderRadius: '12px',
+          width: 'clamp(36px, 7vw, 44px)',
+          height: 'clamp(36px, 7vw, 44px)',
+          borderRadius: 'clamp(8px, 2vw, 12px)',
           background: `linear-gradient(135deg, ${accentColor}20, ${accentColor}10)`,
           border: `1px solid ${accentColor}30`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          flexShrink: 0,
         }}
       >
         {icon}
@@ -124,11 +125,13 @@ const StatCard: FC<StatCardProps> = memo(({
       <span
         style={{
           fontFamily: "'Outfit', sans-serif",
-          fontSize: '0.6875rem',
+          fontSize: 'clamp(0.5625rem, 1.5vw, 0.6875rem)',
           fontWeight: 600,
           color: 'var(--text-tertiary)',
           textTransform: 'uppercase',
           letterSpacing: '0.05em',
+          textAlign: 'right',
+          lineHeight: 1.3,
         }}
       >
         {label}
@@ -140,7 +143,7 @@ const StatCard: FC<StatCardProps> = memo(({
       <p
         style={{
           fontFamily: "'Outfit', sans-serif",
-          fontSize: '1.875rem',
+          fontSize: 'clamp(1.25rem, 4vw, 1.875rem)',
           fontWeight: 800,
           color: 'var(--text-primary)',
           margin: 0,
@@ -153,7 +156,7 @@ const StatCard: FC<StatCardProps> = memo(({
         <p
           style={{
             fontFamily: "'Outfit', sans-serif",
-            fontSize: '0.8125rem',
+            fontSize: 'clamp(0.6875rem, 1.8vw, 0.8125rem)',
             fontWeight: 500,
             color: 'var(--text-tertiary)',
             margin: '4px 0 0 0',
@@ -458,14 +461,14 @@ const DailySalesStats: FC<Props> = ({ summary, byLogisticType, cancelledAmount }
   }, [byLogisticType]);
 
   return (
-    <div style={{ marginBottom: '32px' }}>
+    <div style={{ marginBottom: 'clamp(20px, 4vw, 32px)' }}>
       {/* Main Stats Row */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '16px',
-          marginBottom: '24px',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 160px), 1fr))',
+          gap: 'clamp(10px, 2vw, 16px)',
+          marginBottom: 'clamp(16px, 3vw, 24px)',
         }}
       >
         <StatCard
@@ -537,8 +540,8 @@ const DailySalesStats: FC<Props> = ({ summary, byLogisticType, cancelledAmount }
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '16px',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
+          gap: 'clamp(10px, 2vw, 16px)',
         }}
       >
         <LogisticCard type="fulfillment" data={byLogisticType.fulfillment} />

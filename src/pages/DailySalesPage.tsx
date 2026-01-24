@@ -439,41 +439,44 @@ const DailySalesPage: FC = () => {
           zIndex: 10,
           maxWidth: '1400px',
           margin: '0 auto',
-          padding: '32px 24px',
-          paddingTop: '100px', // Account for fixed header
+          padding: 'clamp(16px, 4vw, 32px) clamp(12px, 3vw, 24px)',
+          paddingTop: 'clamp(80px, 12vw, 100px)', // Account for fixed header
         }}
       >
         {/* Page Header */}
         <header
           className="animate-fade-up"
-          style={{ marginBottom: '40px' }}
+          style={{ marginBottom: 'clamp(24px, 5vw, 40px)' }}
         >
           <div
             style={{
               display: 'flex',
+              flexDirection: 'row',
               flexWrap: 'wrap',
               alignItems: 'flex-start',
               justifyContent: 'space-between',
-              gap: '24px',
+              gap: 'clamp(16px, 3vw, 24px)',
             }}
           >
             {/* Title Section */}
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px' }}>
+            <div style={{ flex: '1 1 auto', minWidth: '200px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(12px, 2vw, 16px)', marginBottom: '8px' }}>
                 {/* Icon */}
                 <div
+                  className="icon-container"
                   style={{
-                    width: '56px',
-                    height: '56px',
-                    borderRadius: '16px',
+                    width: 'clamp(44px, 8vw, 56px)',
+                    height: 'clamp(44px, 8vw, 56px)',
+                    borderRadius: 'clamp(12px, 2vw, 16px)',
                     background: 'linear-gradient(135deg, #f59e0b, #ea580c)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     boxShadow: '0 0 40px -10px rgba(245, 158, 11, 0.5)',
+                    flexShrink: 0,
                   }}
                 >
-                  <HiSparkles style={{ width: '28px', height: '28px', color: '#fff' }} />
+                  <HiSparkles style={{ width: 'clamp(22px, 4vw, 28px)', height: 'clamp(22px, 4vw, 28px)', color: '#fff' }} />
                 </div>
 
                 <div>
@@ -491,7 +494,8 @@ const DailySalesPage: FC = () => {
                   </h1>
                   <p
                     className="text-body"
-                    style={{ color: 'var(--text-tertiary)', margin: 0 }}
+                    style={{ color: 'var(--text-tertiary)', margin: 0, display: 'none' }}
+                    data-desktop-only
                   >
                     Dashboard de análisis • Mercado Libre
                   </p>
@@ -500,14 +504,15 @@ const DailySalesPage: FC = () => {
             </div>
 
             {/* Action Buttons */}
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: 'clamp(8px, 2vw, 12px)', flexShrink: 0 }}>
               <button
                 onClick={handleRefresh}
                 disabled={isRefreshing}
-                className="btn-secondary"
+                className="btn-secondary btn-compact"
                 style={{ opacity: isRefreshing ? 0.5 : 1 }}
               >
                 <HiRefresh
+                  className="btn-icon"
                   style={{
                     width: '18px',
                     height: '18px',
@@ -517,15 +522,15 @@ const DailySalesPage: FC = () => {
                 <span>{isRefreshing ? 'Sincronizando...' : 'Sincronizar'}</span>
               </button>
 
-              <button className="btn-primary">
-                <HiDownload style={{ width: '18px', height: '18px' }} />
+              <button className="btn-primary btn-compact">
+                <HiDownload className="btn-icon" style={{ width: '18px', height: '18px' }} />
                 <span>Exportar</span>
               </button>
             </div>
           </div>
 
           {/* Date Selector */}
-          <div style={{ marginTop: '24px' }}>
+          <div style={{ marginTop: 'clamp(16px, 3vw, 24px)' }}>
             <DateSelector
               selectedDate={selectedDate}
               onDateChange={handleDateChange}

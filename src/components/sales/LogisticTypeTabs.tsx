@@ -49,12 +49,12 @@ const CheckboxButton: FC<CheckboxButtonProps> = memo(({ config, count, isSelecte
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: '10px',
-      padding: '14px 20px',
+      gap: 'clamp(6px, 1.5vw, 10px)',
+      padding: 'clamp(10px, 2vw, 14px) clamp(12px, 2.5vw, 20px)',
       borderRadius: '12px',
       border: isSelected ? `2px solid ${config.accent}` : '2px solid transparent',
       fontFamily: "'Outfit', sans-serif",
-      fontSize: '0.9375rem',
+      fontSize: 'clamp(0.8125rem, 2vw, 0.9375rem)',
       fontWeight: 600,
       cursor: 'pointer',
       transition: 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)',
@@ -65,6 +65,8 @@ const CheckboxButton: FC<CheckboxButtonProps> = memo(({ config, count, isSelecte
       color: isSelected ? config.accent : '#a1a1aa',
       boxShadow: isSelected ? `0 4px 20px -4px ${config.accent}40` : 'none',
       transform: isSelected ? 'scale(1)' : 'scale(0.98)',
+      minWidth: 0,
+      flex: '1 1 auto',
     }}
     onMouseEnter={(e) => {
       if (!isSelected) {
@@ -116,12 +118,16 @@ const CheckboxButton: FC<CheckboxButtonProps> = memo(({ config, count, isSelecte
     </div>
 
     {/* Icon */}
-    <span style={{ position: 'relative', fontSize: '1.125rem' }}>{config.icon}</span>
+    <span style={{ position: 'relative', fontSize: '1.125rem', flexShrink: 0 }}>{config.icon}</span>
 
-    {/* Label */}
+    {/* Label - hidden on very small screens */}
     <span
+      className="filter-label"
       style={{
         position: 'relative',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
       }}
     >
       {config.label}
@@ -140,6 +146,7 @@ const CheckboxButton: FC<CheckboxButtonProps> = memo(({ config, count, isSelecte
         color: isSelected ? config.accent : '#71717a',
         minWidth: '24px',
         textAlign: 'center',
+        flexShrink: 0,
       }}
     >
       {count}
@@ -186,38 +193,40 @@ const LogisticTypeTabs: FC<Props> = ({ selectedTypes, onSelectionChange, counts 
   const totalSelected = selectedTypes.size;
 
   return (
-    <div style={{ marginBottom: '24px' }}>
+    <div style={{ marginBottom: 'clamp(16px, 3vw, 24px)', width: '100%' }}>
       {/* Container */}
       <div
         className="glass-card"
         style={{
-          display: 'inline-flex',
+          display: 'flex',
           flexDirection: 'column',
-          gap: '12px',
-          padding: '16px',
+          gap: 'clamp(8px, 2vw, 12px)',
+          padding: 'clamp(12px, 2vw, 16px)',
           borderRadius: '16px',
+          width: '100%',
+          maxWidth: '100%',
         }}
       >
         {/* Header with Select All */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid var(--border-subtle)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid var(--border-subtle)', flexWrap: 'wrap', gap: '8px' }}>
           <span
             style={{
               fontFamily: "'Outfit', sans-serif",
-              fontSize: '0.75rem',
+              fontSize: 'clamp(0.6875rem, 1.8vw, 0.75rem)',
               fontWeight: 600,
               color: 'var(--text-tertiary)',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
             }}
           >
-            Filtrar por tipo ({totalSelected} seleccionados)
+            Filtrar por tipo ({totalSelected})
           </span>
           <button
             onClick={handleSelectAll}
             disabled={allSelected}
             style={{
               fontFamily: "'Outfit', sans-serif",
-              fontSize: '0.75rem',
+              fontSize: 'clamp(0.6875rem, 1.8vw, 0.75rem)',
               fontWeight: 600,
               color: allSelected ? 'var(--text-tertiary)' : '#f59e0b',
               background: 'none',
@@ -237,16 +246,16 @@ const LogisticTypeTabs: FC<Props> = ({ selectedTypes, onSelectionChange, counts 
               e.currentTarget.style.backgroundColor = 'transparent';
             }}
           >
-            Seleccionar todos
+            Todos
           </button>
         </div>
 
-        {/* Checkbox Grid */}
+        {/* Checkbox Grid - responsive: 3 columns on desktop, flexible on mobile */}
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '8px',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 'clamp(6px, 1.5vw, 8px)',
           }}
         >
           {typesWithCounts.map((config) => (
