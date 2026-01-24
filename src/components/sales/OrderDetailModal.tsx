@@ -119,13 +119,14 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
       {/* Modal */}
       <div
         ref={modalRef}
+        className="order-detail-modal"
         style={{
           position: 'relative',
           width: '100%',
-          maxWidth: '672px',
+          maxWidth: 'min(672px, calc(100vw - 32px))',
           maxHeight: '90vh',
           overflow: 'hidden',
-          borderRadius: '24px',
+          borderRadius: 'clamp(16px, 4vw, 24px)',
           backgroundColor: '#18181b',
           border: '1px solid #27272a',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
@@ -135,7 +136,7 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
         <div
           style={{
             position: 'relative',
-            padding: '20px 24px',
+            padding: 'clamp(14px, 3vw, 20px) clamp(16px, 4vw, 24px)',
             borderBottom: '1px solid #27272a',
             background: 'linear-gradient(to right, #18181b, rgba(39, 39, 42, 0.5), #18181b)',
           }}
@@ -149,28 +150,29 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
             }}
           />
 
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(10px, 2.5vw, 16px)', minWidth: 0, flex: 1 }}>
               {/* Order Icon */}
               <div
                 style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '16px',
+                  width: 'clamp(44px, 10vw, 56px)',
+                  height: 'clamp(44px, 10vw, 56px)',
+                  borderRadius: 'clamp(12px, 3vw, 16px)',
                   background: 'linear-gradient(135deg, #f59e0b, #ea580c)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   boxShadow: '0 10px 15px -3px rgba(245, 158, 11, 0.2)',
+                  flexShrink: 0,
                 }}
               >
-                <HiCube style={{ width: '28px', height: '28px', color: '#ffffff' }} />
+                <HiCube style={{ width: 'clamp(22px, 5vw, 28px)', height: 'clamp(22px, 5vw, 28px)', color: '#ffffff' }} />
               </div>
 
               {/* Order Info */}
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#ffffff', margin: 0 }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <h2 style={{ fontSize: 'clamp(16px, 4vw, 24px)', fontWeight: 700, color: '#ffffff', margin: 0, whiteSpace: 'nowrap' }}>
                     Orden #{order.id}
                   </h2>
                   {order.pack_id && (
@@ -189,7 +191,7 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
                     </span>
                   )}
                 </div>
-                <p style={{ fontSize: '14px', color: '#71717a', textTransform: 'capitalize', margin: '4px 0 0 0' }}>
+                <p style={{ fontSize: 'clamp(11px, 2.5vw, 14px)', color: '#71717a', textTransform: 'capitalize', margin: '4px 0 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {formatDate(order.date_created || order.date_approved)}
                 </p>
               </div>
@@ -265,7 +267,7 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
         </div>
 
         {/* Content - Scrollable */}
-        <div style={{ overflowY: 'auto', maxHeight: 'calc(90vh - 200px)', padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ overflowY: 'auto', maxHeight: 'calc(90vh - 200px)', padding: 'clamp(16px, 4vw, 24px)', display: 'flex', flexDirection: 'column', gap: 'clamp(16px, 4vw, 24px)' }}>
           {/* Buyer Info */}
           {order.buyer && (
             <div
@@ -350,7 +352,59 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
               </div>
 
               {/* Buyer Details Grid */}
-              <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div style={{ padding: 'clamp(12px, 3vw, 16px) clamp(14px, 3.5vw, 20px)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'clamp(10px, 2.5vw, 16px)' }}>
+                {/* Nombre Destinatario - Full width */}
+                <div
+                  style={{
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    backgroundColor: 'rgba(39, 39, 42, 0.5)',
+                    border: '1px solid rgba(63, 63, 70, 0.3)',
+                    gridColumn: '1 / -1',
+                  }}
+                >
+                  <p style={{ fontSize: '11px', fontWeight: 600, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+                    Nombre Destinatario
+                  </p>
+                  <p style={{ fontSize: '14px', fontWeight: 600, color: '#e4e4e7', margin: '4px 0 0 0' }}>
+                    {order.buyer.receiver_name || (order.buyer.first_name && order.buyer.last_name ? `${order.buyer.first_name} ${order.buyer.last_name}` : '—')}
+                  </p>
+                </div>
+
+                {/* RUT */}
+                <div
+                  style={{
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    backgroundColor: 'rgba(39, 39, 42, 0.5)',
+                    border: '1px solid rgba(63, 63, 70, 0.3)',
+                  }}
+                >
+                  <p style={{ fontSize: '11px', fontWeight: 600, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+                    RUT
+                  </p>
+                  <p style={{ fontSize: '14px', fontWeight: 600, color: '#e4e4e7', margin: '4px 0 0 0', fontFamily: "'JetBrains Mono', monospace" }}>
+                    {order.buyer.receiver_rut || '—'}
+                  </p>
+                </div>
+
+                {/* Teléfono */}
+                <div
+                  style={{
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    backgroundColor: 'rgba(39, 39, 42, 0.5)',
+                    border: '1px solid rgba(63, 63, 70, 0.3)',
+                  }}
+                >
+                  <p style={{ fontSize: '11px', fontWeight: 600, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+                    Teléfono
+                  </p>
+                  <p style={{ fontSize: '14px', fontWeight: 600, color: '#e4e4e7', margin: '4px 0 0 0', fontFamily: "'JetBrains Mono', monospace" }}>
+                    {order.buyer.receiver_phone || '—'}
+                  </p>
+                </div>
+
                 {/* Nickname */}
                 <div
                   style={{
@@ -395,128 +449,118 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                fontSize: '14px',
+                fontSize: 'clamp(12px, 3vw, 14px)',
                 fontWeight: 700,
                 color: '#a1a1aa',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
-                marginBottom: '12px',
+                marginBottom: 'clamp(10px, 2.5vw, 12px)',
               }}
             >
               <HiCube style={{ width: '16px', height: '16px' }} />
               Productos ({order.items.length})
             </h3>
 
-            <div style={{ borderRadius: '12px', border: '1px solid #27272a', overflow: 'hidden' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ backgroundColor: 'rgba(39, 39, 42, 0.5)' }}>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 700, color: '#71717a', textTransform: 'uppercase' }}>
-                      Producto
-                    </th>
-                    <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '12px', fontWeight: 700, color: '#71717a', textTransform: 'uppercase' }}>
-                      SKU
-                    </th>
-                    <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '12px', fontWeight: 700, color: '#71717a', textTransform: 'uppercase' }}>
-                      Cant.
-                    </th>
-                    <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: 700, color: '#71717a', textTransform: 'uppercase' }}>
-                      P. Unit.
-                    </th>
-                    <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: 700, color: '#71717a', textTransform: 'uppercase' }}>
-                      Subtotal
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {order.items.map((item, idx) => (
-                    <tr
-                      key={idx}
+            {/* Product Cards - Mobile Friendly */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {order.items.map((item, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    borderRadius: '12px',
+                    border: '1px solid #27272a',
+                    backgroundColor: 'rgba(39, 39, 42, 0.3)',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {/* Product Main Info */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(10px, 2.5vw, 12px)', padding: 'clamp(10px, 2.5vw, 14px)' }}>
+                    {/* Thumbnail */}
+                    <div
                       style={{
-                        borderTop: '1px solid rgba(39, 39, 42, 0.5)',
-                        transition: 'background-color 0.2s',
+                        width: 'clamp(44px, 10vw, 56px)',
+                        height: 'clamp(44px, 10vw, 56px)',
+                        borderRadius: '10px',
+                        backgroundColor: '#27272a',
+                        border: '1px solid #3f3f46',
+                        overflow: 'hidden',
+                        flexShrink: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                     >
-                      <td style={{ padding: '12px 16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          {/* Thumbnail */}
-                          <div
-                            style={{
-                              width: '48px',
-                              height: '48px',
-                              borderRadius: '10px',
-                              backgroundColor: '#27272a',
-                              border: '1px solid #3f3f46',
-                              overflow: 'hidden',
-                              flexShrink: 0,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            {item.thumbnail ? (
-                              <img
-                                src={item.thumbnail}
-                                alt={item.title}
-                                style={{
-                                  width: '100%',
-                                  height: '100%',
-                                  objectFit: 'cover',
-                                }}
-                                loading="lazy"
-                              />
-                            ) : (
-                              <span style={{ fontSize: '22px' }}>📦</span>
-                            )}
-                          </div>
-                          {/* Title */}
-                          <p
-                            style={{
-                              fontSize: '14px',
-                              color: '#ffffff',
-                              fontWeight: 500,
-                              margin: 0,
-                              overflow: 'hidden',
-                              display: '-webkit-box',
-                              WebkitLineClamp: 2,
-                              WebkitBoxOrient: 'vertical',
-                            }}
-                          >
-                            {item.title}
-                          </p>
-                        </div>
-                      </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                      {item.thumbnail ? (
+                        <img
+                          src={item.thumbnail}
+                          alt={item.title}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          loading="lazy"
+                        />
+                      ) : (
+                        <span style={{ fontSize: '22px' }}>📦</span>
+                      )}
+                    </div>
+                    {/* Title & SKU */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p
+                        style={{
+                          fontSize: 'clamp(12px, 3vw, 14px)',
+                          color: '#ffffff',
+                          fontWeight: 500,
+                          margin: 0,
+                          overflow: 'hidden',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                        }}
+                      >
+                        {item.title}
+                      </p>
+                      {item.seller_sku && (
                         <span
                           style={{
                             fontFamily: 'monospace',
-                            fontSize: '12px',
+                            fontSize: '11px',
                             color: '#71717a',
                             backgroundColor: '#27272a',
-                            padding: '4px 8px',
+                            padding: '2px 6px',
                             borderRadius: '4px',
+                            display: 'inline-block',
+                            marginTop: '4px',
                           }}
                         >
-                          {item.seller_sku || '—'}
+                          SKU: {item.seller_sku}
                         </span>
-                      </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                        <span style={{ fontSize: '14px', fontWeight: 600, color: '#ffffff' }}>
-                          {item.quantity}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: '14px', color: '#a1a1aa' }}>
-                        {formatCurrency(item.unit_price)}
-                      </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                        <span style={{ fontSize: '14px', fontWeight: 600, color: '#ffffff' }}>
-                          {formatCurrency(item.unit_price * item.quantity)}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Product Financials */}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(3, 1fr)',
+                      gap: '1px',
+                      backgroundColor: 'rgba(39, 39, 42, 0.5)',
+                      borderTop: '1px solid rgba(39, 39, 42, 0.5)',
+                    }}
+                  >
+                    <div style={{ padding: 'clamp(8px, 2vw, 12px)', backgroundColor: '#18181b', textAlign: 'center' }}>
+                      <p style={{ fontSize: '10px', fontWeight: 600, color: '#71717a', textTransform: 'uppercase', margin: 0 }}>Cant.</p>
+                      <p style={{ fontSize: 'clamp(13px, 3vw, 15px)', fontWeight: 700, color: '#ffffff', margin: '4px 0 0 0' }}>{item.quantity}</p>
+                    </div>
+                    <div style={{ padding: 'clamp(8px, 2vw, 12px)', backgroundColor: '#18181b', textAlign: 'center' }}>
+                      <p style={{ fontSize: '10px', fontWeight: 600, color: '#71717a', textTransform: 'uppercase', margin: 0 }}>P. Unit.</p>
+                      <p style={{ fontSize: 'clamp(12px, 2.5vw, 14px)', fontWeight: 600, color: '#a1a1aa', margin: '4px 0 0 0' }}>{formatCurrency(item.unit_price)}</p>
+                    </div>
+                    <div style={{ padding: 'clamp(8px, 2vw, 12px)', backgroundColor: '#18181b', textAlign: 'center' }}>
+                      <p style={{ fontSize: '10px', fontWeight: 600, color: '#71717a', textTransform: 'uppercase', margin: 0 }}>Subtotal</p>
+                      <p style={{ fontSize: 'clamp(13px, 3vw, 15px)', fontWeight: 700, color: '#34d399', margin: '4px 0 0 0' }}>{formatCurrency(item.unit_price * item.quantity)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -527,12 +571,12 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                fontSize: '14px',
+                fontSize: 'clamp(12px, 3vw, 14px)',
                 fontWeight: 700,
                 color: '#a1a1aa',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
-                marginBottom: '16px',
+                marginBottom: 'clamp(12px, 3vw, 16px)',
               }}
             >
               <HiCurrencyDollar style={{ width: '16px', height: '16px' }} />
@@ -551,49 +595,50 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
               {/* Gross Amount - Hero Section */}
               <div
                 style={{
-                  padding: '24px',
+                  padding: 'clamp(16px, 4vw, 24px)',
                   background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.02))',
                   borderBottom: '1px solid rgba(63, 63, 70, 0.3)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2vw, 12px)' }}>
                     <div
                       style={{
-                        width: '44px',
-                        height: '44px',
-                        borderRadius: '12px',
+                        width: 'clamp(36px, 8vw, 44px)',
+                        height: 'clamp(36px, 8vw, 44px)',
+                        borderRadius: 'clamp(10px, 2.5vw, 12px)',
                         background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1))',
                         border: '1px solid rgba(16, 185, 129, 0.3)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
+                        flexShrink: 0,
                       }}
                     >
-                      <HiCurrencyDollar style={{ width: '22px', height: '22px', color: '#34d399' }} />
+                      <HiCurrencyDollar style={{ width: 'clamp(18px, 4vw, 22px)', height: 'clamp(18px, 4vw, 22px)', color: '#34d399' }} />
                     </div>
                     <div>
-                      <p style={{ fontSize: '12px', fontWeight: 600, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+                      <p style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', fontWeight: 600, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
                         Venta Bruta
                       </p>
-                      <p style={{ fontSize: '11px', color: '#52525b', margin: '2px 0 0 0' }}>
+                      <p style={{ fontSize: 'clamp(10px, 2vw, 11px)', color: '#52525b', margin: '2px 0 0 0' }}>
                         Total facturado
                       </p>
                     </div>
                   </div>
-                  <span style={{ fontSize: '28px', fontWeight: 800, color: '#10b981', fontFamily: "'Outfit', sans-serif" }}>
+                  <span style={{ fontSize: 'clamp(20px, 5vw, 28px)', fontWeight: 800, color: '#10b981', fontFamily: "'Outfit', sans-serif" }}>
                     {formatCurrency(order.gross_amount)}
                   </span>
                 </div>
               </div>
 
               {/* Deductions Grid */}
-              <div style={{ padding: '20px 24px' }}>
-                <p style={{ fontSize: '11px', fontWeight: 700, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 16px 0' }}>
+              <div style={{ padding: 'clamp(14px, 3.5vw, 20px) clamp(16px, 4vw, 24px)' }}>
+                <p style={{ fontSize: 'clamp(10px, 2.5vw, 11px)', fontWeight: 700, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 clamp(12px, 3vw, 16px) 0' }}>
                   Deducciones y Costos
                 </p>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(8px, 2vw, 12px)' }}>
                   {/* Shipping Cost/Income - Flex (income): green, Flex (cost) & Full/Centro: blue */}
                   {(() => {
                     // Flex orders with INCOME (buyer pays shipping to seller)
@@ -611,36 +656,39 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          padding: '14px 16px',
-                          borderRadius: '12px',
+                          padding: 'clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 16px)',
+                          borderRadius: 'clamp(10px, 2.5vw, 12px)',
                           background: `linear-gradient(135deg, ${shippingBgRgba}0.08), ${shippingBgRgba}0.02))`,
                           border: `1px solid ${shippingBgRgba}0.15)`,
+                          gap: '8px',
+                          flexWrap: 'wrap',
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2vw, 12px)', flex: '1 1 auto', minWidth: '150px' }}>
                           <div
                             style={{
-                              width: '36px',
-                              height: '36px',
-                              borderRadius: '10px',
+                              width: 'clamp(30px, 7vw, 36px)',
+                              height: 'clamp(30px, 7vw, 36px)',
+                              borderRadius: 'clamp(8px, 2vw, 10px)',
                               backgroundColor: `${shippingBgRgba}0.15)`,
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
+                              flexShrink: 0,
                             }}
                           >
-                            <HiTruck style={{ width: '18px', height: '18px', color: shippingColor }} />
+                            <HiTruck style={{ width: 'clamp(14px, 3.5vw, 18px)', height: 'clamp(14px, 3.5vw, 18px)', color: shippingColor }} />
                           </div>
                           <div>
-                            <p style={{ fontSize: '13px', fontWeight: 600, color: shippingColor, margin: 0 }}>
+                            <p style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', fontWeight: 600, color: shippingColor, margin: 0 }}>
                               {isShippingIncome ? 'Ingreso por Envío' : 'Costo de Envío'}
                             </p>
-                            <p style={{ fontSize: '11px', color: '#71717a', margin: '2px 0 0 0' }}>
+                            <p style={{ fontSize: 'clamp(9px, 2.2vw, 11px)', color: '#71717a', margin: '2px 0 0 0' }}>
                               {isShippingIncome ? 'Flex (comprador paga)' : isFlexWithCost ? 'Flex (envío gratis >$20k)' : 'Mercado Envíos'}
                             </p>
                           </div>
                         </div>
-                        <span style={{ fontSize: '16px', fontWeight: 700, color: shippingColor, fontFamily: "'JetBrains Mono', monospace" }}>
+                        <span style={{ fontSize: 'clamp(13px, 3.5vw, 16px)', fontWeight: 700, color: shippingColor, fontFamily: "'JetBrains Mono', monospace" }}>
                           {isShippingIncome ? '+' : '-'} {formatCurrency(order.shipping_cost)}
                         </span>
                       </div>
@@ -653,35 +701,38 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '14px 16px',
-                      borderRadius: '12px',
+                      padding: 'clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 16px)',
+                      borderRadius: 'clamp(10px, 2.5vw, 12px)',
                       background: 'linear-gradient(135deg, rgba(251, 113, 133, 0.08), rgba(251, 113, 133, 0.02))',
                       border: '1px solid rgba(251, 113, 133, 0.15)',
+                      gap: '8px',
+                      flexWrap: 'wrap',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2vw, 12px)', flex: '1 1 auto', minWidth: '150px' }}>
                       <div
                         style={{
-                          width: '36px',
-                          height: '36px',
-                          borderRadius: '10px',
+                          width: 'clamp(30px, 7vw, 36px)',
+                          height: 'clamp(30px, 7vw, 36px)',
+                          borderRadius: 'clamp(8px, 2vw, 10px)',
                           backgroundColor: 'rgba(251, 113, 133, 0.15)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '14px',
+                          fontSize: 'clamp(11px, 2.8vw, 14px)',
                           fontWeight: 700,
                           color: '#fb7185',
+                          flexShrink: 0,
                         }}
                       >
                         %
                       </div>
                       <div>
-                        <p style={{ fontSize: '13px', fontWeight: 600, color: '#fb7185', margin: 0 }}>Comisión ML</p>
-                        <p style={{ fontSize: '11px', color: '#71717a', margin: '2px 0 0 0' }}>Fee del marketplace</p>
+                        <p style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', fontWeight: 600, color: '#fb7185', margin: 0 }}>Comisión ML</p>
+                        <p style={{ fontSize: 'clamp(9px, 2.2vw, 11px)', color: '#71717a', margin: '2px 0 0 0' }}>Fee del marketplace</p>
                       </div>
                     </div>
-                    <span style={{ fontSize: '16px', fontWeight: 700, color: '#fb7185', fontFamily: "'JetBrains Mono', monospace" }}>
+                    <span style={{ fontSize: 'clamp(13px, 3.5vw, 16px)', fontWeight: 700, color: '#fb7185', fontFamily: "'JetBrains Mono', monospace" }}>
                       - {formatCurrency(order.marketplace_fee)}
                     </span>
                   </div>
@@ -692,32 +743,35 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '14px 16px',
-                      borderRadius: '12px',
+                      padding: 'clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 16px)',
+                      borderRadius: 'clamp(10px, 2.5vw, 12px)',
                       background: 'linear-gradient(135deg, rgba(251, 146, 60, 0.08), rgba(251, 146, 60, 0.02))',
                       border: '1px solid rgba(251, 146, 60, 0.15)',
+                      gap: '8px',
+                      flexWrap: 'wrap',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2vw, 12px)', flex: '1 1 auto', minWidth: '150px' }}>
                       <div
                         style={{
-                          width: '36px',
-                          height: '36px',
-                          borderRadius: '10px',
+                          width: 'clamp(30px, 7vw, 36px)',
+                          height: 'clamp(30px, 7vw, 36px)',
+                          borderRadius: 'clamp(8px, 2vw, 10px)',
                           backgroundColor: 'rgba(251, 146, 60, 0.15)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
+                          flexShrink: 0,
                         }}
                       >
-                        <HiDocumentText style={{ width: '18px', height: '18px', color: '#fb923c' }} />
+                        <HiDocumentText style={{ width: 'clamp(14px, 3.5vw, 18px)', height: 'clamp(14px, 3.5vw, 18px)', color: '#fb923c' }} />
                       </div>
                       <div>
-                        <p style={{ fontSize: '13px', fontWeight: 600, color: '#fb923c', margin: 0 }}>IVA (19%)</p>
-                        <p style={{ fontSize: '11px', color: '#71717a', margin: '2px 0 0 0' }}>Impuesto a la venta</p>
+                        <p style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', fontWeight: 600, color: '#fb923c', margin: 0 }}>IVA (19%)</p>
+                        <p style={{ fontSize: 'clamp(9px, 2.2vw, 11px)', color: '#71717a', margin: '2px 0 0 0' }}>Impuesto a la venta</p>
                       </div>
                     </div>
-                    <span style={{ fontSize: '16px', fontWeight: 700, color: '#fb923c', fontFamily: "'JetBrains Mono', monospace" }}>
+                    <span style={{ fontSize: 'clamp(13px, 3.5vw, 16px)', fontWeight: 700, color: '#fb923c', fontFamily: "'JetBrains Mono', monospace" }}>
                       - {formatCurrency(order.iva_amount || 0)}
                     </span>
                   </div>
@@ -729,33 +783,36 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '14px 16px',
-                        borderRadius: '12px',
+                        padding: 'clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 16px)',
+                        borderRadius: 'clamp(10px, 2.5vw, 12px)',
                         background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(139, 92, 246, 0.02))',
                         border: '1px solid rgba(139, 92, 246, 0.15)',
+                        gap: '8px',
+                        flexWrap: 'wrap',
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2vw, 12px)', flex: '1 1 auto', minWidth: '150px' }}>
                         <div
                           style={{
-                            width: '36px',
-                            height: '36px',
-                            borderRadius: '10px',
+                            width: 'clamp(30px, 7vw, 36px)',
+                            height: 'clamp(30px, 7vw, 36px)',
+                            borderRadius: 'clamp(8px, 2vw, 10px)',
                             backgroundColor: 'rgba(139, 92, 246, 0.15)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: '16px',
+                            fontSize: 'clamp(14px, 3.5vw, 16px)',
+                            flexShrink: 0,
                           }}
                         >
                           🚚
                         </div>
                         <div>
-                          <p style={{ fontSize: '13px', fontWeight: 600, color: '#a78bfa', margin: 0 }}>Costo Courier</p>
-                          <p style={{ fontSize: '11px', color: '#71717a', margin: '2px 0 0 0' }}>Envío externo (vendedor paga)</p>
+                          <p style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', fontWeight: 600, color: '#a78bfa', margin: 0 }}>Costo Courier</p>
+                          <p style={{ fontSize: 'clamp(9px, 2.2vw, 11px)', color: '#71717a', margin: '2px 0 0 0' }}>Envío externo (vendedor paga)</p>
                         </div>
                       </div>
-                      <span style={{ fontSize: '16px', fontWeight: 700, color: '#a78bfa', fontFamily: "'JetBrains Mono', monospace" }}>
+                      <span style={{ fontSize: 'clamp(13px, 3.5vw, 16px)', fontWeight: 700, color: '#a78bfa', fontFamily: "'JetBrains Mono', monospace" }}>
                         - {formatCurrency(order.courier_cost)}
                       </span>
                     </div>
@@ -768,33 +825,36 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '14px 16px',
-                        borderRadius: '12px',
+                        padding: 'clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 16px)',
+                        borderRadius: 'clamp(10px, 2.5vw, 12px)',
                         background: 'linear-gradient(135deg, rgba(52, 211, 153, 0.08), rgba(52, 211, 153, 0.02))',
                         border: '1px solid rgba(52, 211, 153, 0.15)',
+                        gap: '8px',
+                        flexWrap: 'wrap',
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2vw, 12px)', flex: '1 1 auto', minWidth: '150px' }}>
                         <div
                           style={{
-                            width: '36px',
-                            height: '36px',
-                            borderRadius: '10px',
+                            width: 'clamp(30px, 7vw, 36px)',
+                            height: 'clamp(30px, 7vw, 36px)',
+                            borderRadius: 'clamp(8px, 2vw, 10px)',
                             backgroundColor: 'rgba(52, 211, 153, 0.15)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: '16px',
+                            fontSize: 'clamp(14px, 3.5vw, 16px)',
+                            flexShrink: 0,
                           }}
                         >
                           🎁
                         </div>
                         <div>
-                          <p style={{ fontSize: '13px', fontWeight: 600, color: '#34d399', margin: 0 }}>Bonificación ML</p>
-                          <p style={{ fontSize: '11px', color: '#71717a', margin: '2px 0 0 0' }}>Compensación por envío gratis</p>
+                          <p style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', fontWeight: 600, color: '#34d399', margin: 0 }}>Bonificación ML</p>
+                          <p style={{ fontSize: 'clamp(9px, 2.2vw, 11px)', color: '#71717a', margin: '2px 0 0 0' }}>Compensación por envío gratis</p>
                         </div>
                       </div>
-                      <span style={{ fontSize: '16px', fontWeight: 700, color: '#34d399', fontFamily: "'JetBrains Mono', monospace" }}>
+                      <span style={{ fontSize: 'clamp(13px, 3.5vw, 16px)', fontWeight: 700, color: '#34d399', fontFamily: "'JetBrains Mono', monospace" }}>
                         + {formatCurrency(order.shipping_bonus)}
                       </span>
                     </div>
@@ -822,20 +882,20 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
               {/* Net Profit - Result Section */}
               <div
                 style={{
-                  padding: '24px',
+                  padding: 'clamp(16px, 4vw, 24px)',
                   background: order.net_profit >= 0
                     ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(16, 185, 129, 0.04))'
                     : 'linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(239, 68, 68, 0.04))',
                   borderTop: '1px solid rgba(63, 63, 70, 0.3)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'clamp(14px, 3.5vw, 20px)', flexWrap: 'wrap', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2vw, 12px)' }}>
                     <div
                       style={{
-                        width: '48px',
-                        height: '48px',
-                        borderRadius: '14px',
+                        width: 'clamp(40px, 9vw, 48px)',
+                        height: 'clamp(40px, 9vw, 48px)',
+                        borderRadius: 'clamp(11px, 2.8vw, 14px)',
                         background: order.net_profit >= 0
                           ? 'linear-gradient(135deg, #10b981, #059669)'
                           : 'linear-gradient(135deg, #ef4444, #dc2626)',
@@ -845,13 +905,14 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
                         boxShadow: order.net_profit >= 0
                           ? '0 8px 20px -4px rgba(16, 185, 129, 0.4)'
                           : '0 8px 20px -4px rgba(239, 68, 68, 0.4)',
+                        flexShrink: 0,
                       }}
                     >
-                      <span style={{ fontSize: '24px' }}>{order.net_profit >= 0 ? '💰' : '📉'}</span>
+                      <span style={{ fontSize: 'clamp(18px, 4.5vw, 24px)' }}>{order.net_profit >= 0 ? '💰' : '📉'}</span>
                     </div>
                     <div>
-                      <p style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff', margin: 0 }}>Ganancia Neta</p>
-                      <p style={{ fontSize: '12px', color: '#71717a', margin: '2px 0 0 0' }}>
+                      <p style={{ fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: 700, color: '#ffffff', margin: 0 }}>Ganancia Neta</p>
+                      <p style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', color: '#71717a', margin: '2px 0 0 0' }}>
                         {order.net_profit >= 0 ? 'Beneficio final' : 'Pérdida en esta venta'}
                       </p>
                     </div>
@@ -859,7 +920,7 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
                   <div style={{ textAlign: 'right' }}>
                     <span
                       style={{
-                        fontSize: '32px',
+                        fontSize: 'clamp(22px, 6vw, 32px)',
                         fontWeight: 800,
                         color: order.net_profit >= 0 ? '#34d399' : '#f87171',
                         fontFamily: "'Outfit', sans-serif",
@@ -876,20 +937,20 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
                 {/* Profit Margin Visual */}
                 <div
                   style={{
-                    padding: '16px',
-                    borderRadius: '12px',
+                    padding: 'clamp(12px, 3vw, 16px)',
+                    borderRadius: 'clamp(10px, 2.5vw, 12px)',
                     backgroundColor: 'rgba(0, 0, 0, 0.2)',
                     border: '1px solid rgba(63, 63, 70, 0.3)',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'clamp(12px, 3vw, 16px)', flexWrap: 'wrap', gap: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '20px' }}>📊</span>
-                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#d4d4d8' }}>Distribución del Total</span>
+                      <span style={{ fontSize: 'clamp(16px, 4vw, 20px)' }}>📊</span>
+                      <span style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', fontWeight: 600, color: '#d4d4d8' }}>Distribución del Total</span>
                     </div>
                     <span
                       style={{
-                        fontSize: '14px',
+                        fontSize: 'clamp(12px, 3vw, 14px)',
                         fontWeight: 700,
                         color: '#a1a1aa',
                         fontFamily: "'JetBrains Mono', monospace",
@@ -990,24 +1051,24 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
                   </div>
 
                   {/* Legend */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 'clamp(6px, 1.5vw, 10px)' }}>
                     {/* Net Profit */}
                     <div
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '8px 12px',
-                        borderRadius: '8px',
+                        padding: 'clamp(6px, 1.5vw, 8px) clamp(8px, 2vw, 12px)',
+                        borderRadius: 'clamp(6px, 1.5vw, 8px)',
                         backgroundColor: 'rgba(16, 185, 129, 0.1)',
                         border: '1px solid rgba(16, 185, 129, 0.2)',
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'linear-gradient(180deg, #34d399, #10b981)' }} />
-                        <span style={{ fontSize: '12px', fontWeight: 600, color: '#34d399' }}>Ganancia</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(4px, 1vw, 8px)' }}>
+                        <div style={{ width: 'clamp(10px, 2.5vw, 12px)', height: 'clamp(10px, 2.5vw, 12px)', borderRadius: '3px', background: 'linear-gradient(180deg, #34d399, #10b981)', flexShrink: 0 }} />
+                        <span style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', fontWeight: 600, color: '#34d399' }}>Ganancia</span>
                       </div>
-                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#34d399', fontFamily: "'JetBrains Mono', monospace" }}>
+                      <span style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', fontWeight: 700, color: '#34d399', fontFamily: "'JetBrains Mono', monospace" }}>
                         {order.profit_margin.toFixed(1)}%
                       </span>
                     </div>
@@ -1018,17 +1079,17 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '8px 12px',
-                        borderRadius: '8px',
+                        padding: 'clamp(6px, 1.5vw, 8px) clamp(8px, 2vw, 12px)',
+                        borderRadius: 'clamp(6px, 1.5vw, 8px)',
                         backgroundColor: 'rgba(56, 189, 248, 0.1)',
                         border: '1px solid rgba(56, 189, 248, 0.2)',
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'linear-gradient(180deg, #38bdf8, #0ea5e9)' }} />
-                        <span style={{ fontSize: '12px', fontWeight: 600, color: '#38bdf8' }}>Envío</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(4px, 1vw, 8px)' }}>
+                        <div style={{ width: 'clamp(10px, 2.5vw, 12px)', height: 'clamp(10px, 2.5vw, 12px)', borderRadius: '3px', background: 'linear-gradient(180deg, #38bdf8, #0ea5e9)', flexShrink: 0 }} />
+                        <span style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', fontWeight: 600, color: '#38bdf8' }}>Envío</span>
                       </div>
-                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#38bdf8', fontFamily: "'JetBrains Mono', monospace" }}>
+                      <span style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', fontWeight: 700, color: '#38bdf8', fontFamily: "'JetBrains Mono', monospace" }}>
                         {((order.shipping_cost / order.gross_amount) * 100).toFixed(1)}%
                       </span>
                     </div>
@@ -1039,17 +1100,17 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '8px 12px',
-                        borderRadius: '8px',
+                        padding: 'clamp(6px, 1.5vw, 8px) clamp(8px, 2vw, 12px)',
+                        borderRadius: 'clamp(6px, 1.5vw, 8px)',
                         backgroundColor: 'rgba(251, 113, 133, 0.1)',
                         border: '1px solid rgba(251, 113, 133, 0.2)',
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'linear-gradient(180deg, #fb7185, #e11d48)' }} />
-                        <span style={{ fontSize: '12px', fontWeight: 600, color: '#fb7185' }}>Comisión</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(4px, 1vw, 8px)' }}>
+                        <div style={{ width: 'clamp(10px, 2.5vw, 12px)', height: 'clamp(10px, 2.5vw, 12px)', borderRadius: '3px', background: 'linear-gradient(180deg, #fb7185, #e11d48)', flexShrink: 0 }} />
+                        <span style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', fontWeight: 600, color: '#fb7185' }}>Comisión</span>
                       </div>
-                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#fb7185', fontFamily: "'JetBrains Mono', monospace" }}>
+                      <span style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', fontWeight: 700, color: '#fb7185', fontFamily: "'JetBrains Mono', monospace" }}>
                         {((order.marketplace_fee / order.gross_amount) * 100).toFixed(1)}%
                       </span>
                     </div>
@@ -1060,17 +1121,17 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '8px 12px',
-                        borderRadius: '8px',
+                        padding: 'clamp(6px, 1.5vw, 8px) clamp(8px, 2vw, 12px)',
+                        borderRadius: 'clamp(6px, 1.5vw, 8px)',
                         backgroundColor: 'rgba(251, 146, 60, 0.1)',
                         border: '1px solid rgba(251, 146, 60, 0.2)',
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'linear-gradient(180deg, #fb923c, #ea580c)' }} />
-                        <span style={{ fontSize: '12px', fontWeight: 600, color: '#fb923c' }}>IVA</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(4px, 1vw, 8px)' }}>
+                        <div style={{ width: 'clamp(10px, 2.5vw, 12px)', height: 'clamp(10px, 2.5vw, 12px)', borderRadius: '3px', background: 'linear-gradient(180deg, #fb923c, #ea580c)', flexShrink: 0 }} />
+                        <span style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', fontWeight: 600, color: '#fb923c' }}>IVA</span>
                       </div>
-                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#fb923c', fontFamily: "'JetBrains Mono', monospace" }}>
+                      <span style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', fontWeight: 700, color: '#fb923c', fontFamily: "'JetBrains Mono', monospace" }}>
                         {(((order.iva_amount || 0) / order.gross_amount) * 100).toFixed(1)}%
                       </span>
                     </div>
@@ -1084,12 +1145,14 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
         {/* Footer */}
         <div
           style={{
-            padding: '16px 24px',
+            padding: 'clamp(12px, 3vw, 16px) clamp(16px, 4vw, 24px)',
             borderTop: '1px solid #27272a',
             backgroundColor: 'rgba(24, 24, 27, 0.5)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            gap: '12px',
+            flexWrap: 'wrap',
           }}
         >
           <a
@@ -1099,16 +1162,19 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              padding: '10px 16px',
-              borderRadius: '12px',
+              gap: '6px',
+              padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 16px)',
+              borderRadius: 'clamp(10px, 2.5vw, 12px)',
               backgroundColor: '#27272a',
               border: '1px solid #3f3f46',
               color: '#a1a1aa',
-              fontSize: '14px',
+              fontSize: 'clamp(12px, 3vw, 14px)',
               fontWeight: 500,
               textDecoration: 'none',
               transition: 'all 0.2s',
+              flex: '1 1 auto',
+              justifyContent: 'center',
+              minWidth: '120px',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = 'rgba(14, 165, 233, 0.2)';
@@ -1121,22 +1187,25 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
               e.currentTarget.style.color = '#a1a1aa';
             }}
           >
-            <HiExternalLink style={{ width: '16px', height: '16px' }} />
-            Ver en Mercado Libre
+            <HiExternalLink style={{ width: '16px', height: '16px', flexShrink: 0 }} />
+            <span>Ver en ML</span>
           </a>
 
           <button
             onClick={onClose}
             style={{
-              padding: '10px 24px',
-              borderRadius: '12px',
+              padding: 'clamp(8px, 2vw, 10px) clamp(16px, 4vw, 24px)',
+              borderRadius: 'clamp(10px, 2.5vw, 12px)',
               background: 'linear-gradient(to right, #f59e0b, #ea580c)',
               color: '#18181b',
               fontWeight: 600,
+              fontSize: 'clamp(12px, 3vw, 14px)',
               border: 'none',
               cursor: 'pointer',
               transition: 'all 0.2s',
               boxShadow: '0 10px 15px -3px rgba(245, 158, 11, 0.2)',
+              flex: '1 1 auto',
+              minWidth: '100px',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(245, 158, 11, 0.3)';
