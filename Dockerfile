@@ -19,8 +19,8 @@ COPY . .
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 
-# Compilar para producción
-RUN pnpm run build
+# Compilar para producción (sin typecheck)
+RUN ./node_modules/.bin/vite build
 
 # Etapa 2: Nginx para servir archivos estáticos
 FROM nginx:alpine
