@@ -7,16 +7,30 @@ import {
   Table,
   Textarea,
   TextInput,
+  Badge,
+  Tooltip,
 } from "flowbite-react";
 import type { FC } from "react";
 import { useEffect, useRef, useState } from "react";
-import { FaPlus } from "react-icons/fa";
+import {
+  FaPlus,
+  FaFilter,
+  FaChartLine,
+  FaBox,
+  FaHistory,
+  FaSync,
+} from "react-icons/fa";
 import {
   HiHome,
   HiOutlineExclamationCircle,
   HiPencilAlt,
   HiTrash,
   HiUpload,
+  HiEye,
+  HiViewGrid,
+  HiViewList,
+  HiSearch,
+  HiDownload,
 } from "react-icons/hi";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import type { Category, Product, Platform } from "../../types/Products";
@@ -25,32 +39,46 @@ import Pagination from "../../util/Pagination";
 const EcommerceProductsPage: FC = function () {
   return (
     <NavbarSidebarLayout isFooter={false}>
-      <div className="block items-center justify-between border-b border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 sm:flex">
+      {/* Header con tema Amber Nelson - Gold & Black */}
+      <div className="block items-center justify-between border-b-2 border-[#d4a574] bg-gradient-to-r from-[#0a0a0a] via-[#1a1a1a] to-[#2d2020] p-6 sm:flex">
         <div className="mb-1 w-full">
           <div className="">
             <Breadcrumb className="mb-4">
               <Breadcrumb.Item href="#">
                 <div className="flex items-center gap-x-3">
-                  <HiHome className="text-xl" />
-                  <span className="dark:text-white">Home</span>
+                  <HiHome className="text-xl text-[#d4a574]" />
+                  <span className="font-medium text-[#e8d4b8]">Home</span>
                 </div>
               </Breadcrumb.Item>
-              <Breadcrumb.Item href="/e-commerce/products">
+              <Breadcrumb.Item
+                href="/e-commerce/products"
+                className="text-[#c4b5a0]"
+              >
                 E-commerce
               </Breadcrumb.Item>
-              <Breadcrumb.Item>Products</Breadcrumb.Item>
+              <Breadcrumb.Item className="font-semibold text-[#f5d7a1]">
+                Productos
+              </Breadcrumb.Item>
             </Breadcrumb>
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
-              All products
-            </h1>
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-1 bg-gradient-to-b from-[#d4a574] to-[#b8935e]"></div>
+              <div>
+                <h1 className="bg-gradient-to-r from-[#f5d7a1] via-[#d4a574] to-[#c49a6c] bg-clip-text text-3xl font-bold text-transparent">
+                  Catálogo de Productos
+                </h1>
+                <p className="mt-1 text-sm tracking-wide text-[#a0896f]">
+                  Gestión de inventario de accesorios premium
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col">
-        <div className="overflow-x-auto">
+      <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="overflow-x-auto p-6">
           <div className="inline-block min-w-full align-middle">
-            <div className="overflow-hidden shadow">
+            <div className="overflow-hidden rounded-2xl border-2 border-[#d4a574]/30 shadow-2xl">
               <ProductsTable />
             </div>
           </div>
@@ -143,15 +171,25 @@ const AddProductModal: FC = function () {
 
   return (
     <>
-      <Button color="primary" onClick={() => setOpen(!isOpen)}>
-        <FaPlus className="mr-3 text-sm" />
-        Add product
-      </Button>
-      <Modal onClose={() => setOpen(false)} show={isOpen}>
-        <Modal.Header className="border-b border-gray-200 !p-6 dark:border-gray-700">
-          <strong>Add product</strong>
+      <button
+        onClick={() => setOpen(!isOpen)}
+        className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#d4a574] to-[#b8935e] px-6 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-[#b8935e] hover:to-[#d4a574] hover:shadow-xl"
+      >
+        <FaPlus className="text-sm" />
+        Agregar Producto
+      </button>
+      <Modal onClose={() => setOpen(false)} show={isOpen} size="3xl">
+        <Modal.Header className="border-b-2 border-[#d4a574] bg-gradient-to-r from-[#1a1a1a] to-[#2d2020] !p-6">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-lg bg-gradient-to-br from-[#d4a574] to-[#b8935e]">
+              <FaPlus className="text-white" />
+            </div>
+            <strong className="bg-gradient-to-r from-[#f5d7a1] to-[#d4a574] bg-clip-text text-2xl text-transparent">
+              Agregar Producto
+            </strong>
+          </div>
         </Modal.Header>
-        <Modal.Body>
+        <Modal.Body className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900">
           <form onSubmit={handleSubmit} className="mx-auto max-w-2xl p-4">
             <div className="grid grid-cols-1 gap-6">
               {/* Campos principales */}
@@ -347,10 +385,14 @@ const AddProductModal: FC = function () {
                 ))}
               </div>
             </div>
-            <Modal.Footer>
-              <Button type="submit" color="primary">
+            <Modal.Footer className="border-t-2 border-[#d4a574]/20 bg-gray-50 dark:bg-gray-800">
+              <button
+                type="submit"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#d4a574] to-[#b8935e] px-8 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:from-[#b8935e] hover:to-[#d4a574] hover:shadow-xl sm:w-auto"
+              >
+                <FaPlus />
                 Crear Producto
-              </Button>
+              </button>
             </Modal.Footer>
           </form>
         </Modal.Body>
@@ -363,10 +405,13 @@ const EditProductModal: FC = function () {
 
   return (
     <>
-      <Button color="primary" onClick={() => setOpen(!isOpen)}>
-        <HiPencilAlt className="mr-2 text-lg" />
-        Edit item
-      </Button>
+      <button
+        onClick={() => setOpen(!isOpen)}
+        className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2 font-semibold text-white shadow-md transition-all duration-200 hover:from-blue-600 hover:to-blue-700 hover:shadow-lg"
+      >
+        <HiPencilAlt className="text-lg" />
+        Editar
+      </button>
       <Modal onClose={() => setOpen(false)} show={isOpen}>
         <Modal.Header className="border-b border-gray-200 !p-6 dark:border-gray-700">
           <strong>Edit product</strong>
@@ -490,10 +535,13 @@ const DeleteProductModal: FC = function () {
 
   return (
     <>
-      <Button color="failure" onClick={() => setOpen(!isOpen)}>
-        <HiTrash className="mr-2 text-lg" />
-        Delete item
-      </Button>
+      <button
+        onClick={() => setOpen(!isOpen)}
+        className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-red-500 to-red-600 px-4 py-2 font-semibold text-white shadow-md transition-all duration-200 hover:from-red-600 hover:to-red-700 hover:shadow-lg"
+      >
+        <HiTrash className="text-lg" />
+        Eliminar
+      </button>
       <Modal onClose={() => setOpen(false)} show={isOpen} size="md">
         <Modal.Header className="px-3 pb-0 pt-3">
           <span className="sr-only">Delete product</span>
@@ -620,98 +668,170 @@ const ProductsTable: FC = function () {
   };
 
   return (
-    <div className="relative overflow-y-auto rounded-lg p-5 shadow-md">
-      {/* Barra de búsqueda */}
-      <div className="mb-4 flex items-center justify-between">
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={handleSearchChange}
-          placeholder="Buscar productos..."
-          className="w-full max-w-md rounded-md border p-2 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-        />
-        <div className="flex w-full items-center sm:justify-end">
+    <div className="relative overflow-y-auto rounded-2xl bg-white p-6 dark:bg-gray-900">
+      {/* Barra de búsqueda mejorada con tema premium */}
+      <div className="mb-6 flex flex-col items-center justify-between gap-4 rounded-xl border border-[#d4a574]/20 bg-gradient-to-r from-[#f5f5f5] to-[#fafafa] p-4 dark:from-gray-800 dark:to-gray-800 sm:flex-row">
+        <div className="relative w-full max-w-md">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            placeholder="Buscar productos, SKU o categoría..."
+            className="w-full rounded-lg border-2 border-[#d4a574]/40 p-3 pl-10 transition-all focus:border-[#d4a574] focus:ring-2 focus:ring-[#d4a574]/30 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+          />
+          <svg
+            className="absolute left-3 top-3.5 size-5 text-[#d4a574]"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </div>
+        <div className="flex w-full items-center sm:w-auto sm:justify-end">
           <AddProductModal />
         </div>
       </div>
 
-      <Table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
-        <Table.Head className="bg-gray-100 dark:bg-gray-700">
+      <Table className="min-w-full divide-y divide-[#d4a574]/20">
+        <Table.Head className="bg-gradient-to-r from-[#1a1a1a] via-[#2d2020] to-[#1a1a1a]">
           <Table.HeadCell
             onClick={() => handleSortChange("name")}
-            className="cursor-pointer"
+            className="cursor-pointer font-bold text-[#f5d7a1] transition-colors hover:text-[#d4a574]"
           >
-            Nombre del Producto
-            {sortBy === "name" && (sortOrder === "asc" ? " ↑" : " ↓")}
+            <div className="flex items-center gap-2">
+              Nombre del Producto
+              {sortBy === "name" && (
+                <span className="text-[#d4a574]">
+                  {sortOrder === "asc" ? "↑" : "↓"}
+                </span>
+              )}
+            </div>
           </Table.HeadCell>
           <Table.HeadCell
             onClick={() => handleSortChange("stock")}
-            className="cursor-pointer"
+            className="cursor-pointer font-bold text-[#f5d7a1] transition-colors hover:text-[#d4a574]"
           >
-            Stock
-            {sortBy === "stock" && (sortOrder === "asc" ? " ↑" : " ↓")}
+            <div className="flex items-center gap-2">
+              Stock
+              {sortBy === "stock" && (
+                <span className="text-[#d4a574]">
+                  {sortOrder === "asc" ? "↑" : "↓"}
+                </span>
+              )}
+            </div>
           </Table.HeadCell>
           <Table.HeadCell
             onClick={() => handleSortChange("internal_sku")}
-            className="cursor-pointer"
+            className="cursor-pointer font-bold text-[#f5d7a1] transition-colors hover:text-[#d4a574]"
           >
-            SKU
-            {sortBy === "internal_sku" && (sortOrder === "asc" ? " ↑" : " ↓")}
+            <div className="flex items-center gap-2">
+              SKU
+              {sortBy === "internal_sku" && (
+                <span className="text-[#d4a574]">
+                  {sortOrder === "asc" ? "↑" : "↓"}
+                </span>
+              )}
+            </div>
           </Table.HeadCell>
-          <Table.HeadCell>SKU Secundario</Table.HeadCell>
-          <Table.HeadCell>Link</Table.HeadCell>
-          <Table.HeadCell>Acciones</Table.HeadCell>
+          <Table.HeadCell className="font-bold text-[#f5d7a1]">
+            SKU Secundario
+          </Table.HeadCell>
+          <Table.HeadCell className="font-bold text-[#f5d7a1]">
+            Link
+          </Table.HeadCell>
+          <Table.HeadCell className="font-bold text-[#f5d7a1]">
+            Acciones
+          </Table.HeadCell>
         </Table.Head>
-        <Table.Body className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
+        <Table.Body className="divide-y divide-[#d4a574]/10 bg-white dark:divide-gray-700 dark:bg-gray-800">
           {currentProducts.length > 0 ? (
             currentProducts.map((product: Product) => (
               <Table.Row
                 key={product.product_id}
-                className="hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="border-l-4 border-l-transparent transition-all duration-200 hover:border-l-[#d4a574] hover:bg-gradient-to-r hover:from-[#f5f5f5] hover:to-[#fafafa] dark:hover:bg-gray-700"
               >
-                <Table.Cell className="whitespace-nowrap p-4 text-sm font-normal text-gray-500 dark:text-gray-400">
+                <Table.Cell className="whitespace-nowrap p-4 text-sm font-normal">
                   <div
-                    className="truncate text-base font-semibold text-gray-900 dark:text-white"
+                    className="truncate text-base font-bold text-gray-900 dark:text-white"
                     title={product.name}
                   >
                     {product.name.length > 60
                       ? `${product.name.substring(0, 60)}...`
                       : product.name}
                   </div>
-                  <div className="text-sm font-normal text-gray-500 dark:text-gray-400">
-                    Categoria: {product.category.platform_name}
+                  <div className="mt-1 flex items-center gap-2 text-sm font-medium text-[#a0896f] dark:text-gray-400">
+                    <span className="inline-block size-2 rounded-full bg-[#d4a574]"></span>
+                    Categoría: {product.category.platform_name}
                   </div>
                 </Table.Cell>
-                <Table.Cell className="whitespace-nowrap p-4 text-base font-medium text-gray-900 dark:text-white">
-                  {product.stock}
+                <Table.Cell className="whitespace-nowrap p-4">
+                  <span
+                    className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-bold ${
+                      product.stock > 10
+                        ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                        : product.stock > 5
+                          ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
+                          : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+                    }`}
+                  >
+                    {product.stock}
+                  </span>
                 </Table.Cell>
-                <Table.Cell className="whitespace-nowrap p-4 text-base font-medium text-gray-900 dark:text-white">
-                  {product.internal_sku}
+                <Table.Cell className="whitespace-nowrap p-4">
+                  <span className="rounded bg-gray-100 px-3 py-1 font-mono text-sm font-semibold text-gray-900 dark:bg-gray-700 dark:text-white">
+                    {product.internal_sku}
+                  </span>
                 </Table.Cell>
-                <Table.Cell className="whitespace-nowrap p-4 text-base font-medium text-gray-900 dark:text-white">
-                  {product.secondarySkus.length > 0
-                    ? product.secondarySkus.map((sku) => (
-                        <div key={sku.secondary_sku_id}>
-                          {sku.secondary_sku}
-                        </div>
-                      ))
-                    : "N/A"}
+                <Table.Cell className="whitespace-nowrap p-4 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {product.secondarySkus.length > 0 ? (
+                    product.secondarySkus.map((sku) => (
+                      <div
+                        key={sku.secondary_sku_id}
+                        className="mb-1 rounded bg-gray-50 px-2 py-1 font-mono text-xs dark:bg-gray-800"
+                      >
+                        {sku.secondary_sku}
+                      </div>
+                    ))
+                  ) : (
+                    <span className="italic text-gray-400">N/A</span>
+                  )}
                 </Table.Cell>
-                <Table.Cell className="whitespace-nowrap p-4 text-base font-medium text-gray-900 dark:text-white">
-                  {product.secondarySkus.length > 0
-                    ? product.secondarySkus.map((sku) => (
-                        <div key={sku.secondary_sku_id}>
-                          <a
-                            href={sku.publication_link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline"
+                <Table.Cell className="whitespace-nowrap p-4 text-sm">
+                  {product.secondarySkus.length > 0 ? (
+                    product.secondarySkus.map((sku) => (
+                      <div key={sku.secondary_sku_id} className="mb-1">
+                        <a
+                          href={sku.publication_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 font-semibold text-[#d4a574] transition-colors hover:text-[#b8935e] hover:underline"
+                        >
+                          <svg
+                            className="size-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
                           >
-                            Ver publicación
-                          </a>
-                        </div>
-                      ))
-                    : "N/A"}
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                            />
+                          </svg>
+                          Ver publicación
+                        </a>
+                      </div>
+                    ))
+                  ) : (
+                    <span className="italic text-gray-400">N/A</span>
+                  )}
                 </Table.Cell>
                 <Table.Cell className="space-x-2 whitespace-nowrap p-4">
                   <div className="flex items-center gap-x-3">

@@ -1,11 +1,8 @@
 import { Footer } from "flowbite-react";
 import type { FC, PropsWithChildren } from "react";
 import Navbar from "../components/navbar";
-import Sidebar from "../components/sidebar";
 import { MdFacebook } from "react-icons/md";
 import { FaDribbble, FaGithub, FaInstagram, FaTwitter } from "react-icons/fa";
-import { SidebarProvider, useSidebarContext } from "../context/SidebarContext";
-import classNames from "classnames";
 
 interface NavbarSidebarLayoutProps {
   isFooter?: boolean;
@@ -14,13 +11,12 @@ interface NavbarSidebarLayoutProps {
 const NavbarSidebarLayout: FC<PropsWithChildren<NavbarSidebarLayoutProps>> =
   function ({ children, isFooter = true }) {
     return (
-      <SidebarProvider>
+      <>
         <Navbar />
         <div className="flex items-start pt-16">
-          <Sidebar />
           <MainContent isFooter={isFooter}>{children}</MainContent>
         </div>
-      </SidebarProvider>
+      </>
     );
   };
 
@@ -28,15 +24,8 @@ const MainContent: FC<PropsWithChildren<NavbarSidebarLayoutProps>> = function ({
   children,
   isFooter,
 }) {
-  const { isOpenOnSmallScreens: isSidebarOpen } = useSidebarContext();
-
   return (
-    <main
-      className={classNames(
-        "overflow-y-auto relative w-full h-full bg-gray-50 dark:bg-gray-900",
-        isSidebarOpen ? "lg:ml-16" : "lg:ml-64"
-      )}
-    >
+    <main className="relative h-full w-full overflow-y-auto bg-gray-50">
       {children}
       {isFooter && (
         <div className="mx-4 mt-4">
@@ -53,58 +42,43 @@ const MainContentFooter: FC = function () {
       <Footer container>
         <div className="flex w-full flex-col gap-y-6 lg:flex-row lg:justify-between lg:gap-y-0">
           <Footer.LinkGroup>
-            <Footer.Link href="#" className="mr-3 mb-3 lg:mb-0">
-              Terms and conditions
+            <Footer.Link href="#" className="mb-3 mr-3 lg:mb-0">
+              Términos y condiciones
             </Footer.Link>
-            <Footer.Link href="#" className="mr-3 mb-3 lg:mb-0">
-              Privacy Policy
-            </Footer.Link>
-            <Footer.Link href="#" className="mr-3">
-              Licensing
+            <Footer.Link href="#" className="mb-3 mr-3 lg:mb-0">
+              Política de privacidad
             </Footer.Link>
             <Footer.Link href="#" className="mr-3">
-              Cookie Policy
+              Licencia
             </Footer.Link>
-            <Footer.Link href="#">Contact</Footer.Link>
+            <Footer.Link href="#" className="mr-3">
+              Política de cookies
+            </Footer.Link>
+            <Footer.Link href="#">Contacto</Footer.Link>
           </Footer.LinkGroup>
           <Footer.LinkGroup>
             <div className="flex gap-4 md:gap-0">
-              <Footer.Link
-                href="#"
-                className="hover:[&>*]:text-black dark:hover:[&>*]:text-gray-300"
-              >
+              <Footer.Link href="#" className="hover:[&>*]:text-black">
                 <MdFacebook className="text-lg" />
               </Footer.Link>
-              <Footer.Link
-                href="#"
-                className="hover:[&>*]:text-black dark:hover:[&>*]:text-gray-300"
-              >
+              <Footer.Link href="#" className="hover:[&>*]:text-black">
                 <FaInstagram className="text-lg" />
               </Footer.Link>
-              <Footer.Link
-                href="#"
-                className="hover:[&>*]:text-black dark:hover:[&>*]:text-gray-300"
-              >
+              <Footer.Link href="#" className="hover:[&>*]:text-black">
                 <FaTwitter className="text-lg" />
               </Footer.Link>
-              <Footer.Link
-                href="#"
-                className="hover:[&>*]:text-black dark:hover:[&>*]:text-gray-300"
-              >
+              <Footer.Link href="#" className="hover:[&>*]:text-black">
                 <FaGithub className="text-lg" />
               </Footer.Link>
-              <Footer.Link
-                href="#"
-                className="hover:[&>*]:text-black dark:hover:[&>*]:text-gray-300"
-              >
+              <Footer.Link href="#" className="hover:[&>*]:text-black">
                 <FaDribbble className="text-lg" />
               </Footer.Link>
             </div>
           </Footer.LinkGroup>
         </div>
       </Footer>
-      <p className="my-8 text-center text-sm text-gray-500 dark:text-gray-300">
-        &copy; 2019-2022 Flowbite.com. All rights reserved.
+      <p className="my-8 text-center text-sm text-gray-500">
+        &copy; 2025 Amber. Todos los derechos reservados.
       </p>
     </>
   );
