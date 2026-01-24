@@ -13,7 +13,8 @@ export const salesService = {
   },
 
   /**
-   * Sync orders from Mercado Libre API (future)
+   * Sync orders from Mercado Libre API
+   * Uses extended timeout (2 minutes) for large sync operations
    */
   syncFromMercadoLibre: async (
     date: string,
@@ -21,6 +22,7 @@ export const salesService = {
   ): Promise<{ synced: number; message: string }> => {
     const response = await api.get('/orders/sync', {
       params: { date, seller_id: sellerId },
+      timeout: 120000, // 2 minutes for sync (can have 100+ orders)
     });
     return response.data;
   },

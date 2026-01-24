@@ -23,6 +23,7 @@ export interface OrderSummary {
   date_created: string;
   date_approved: string;
   status: string;
+  is_cancelled: boolean; // True if order was cancelled/refunded (shown in list but not counted in sums)
   total_amount: number;
   paid_amount: number;
   logistic_type: string;

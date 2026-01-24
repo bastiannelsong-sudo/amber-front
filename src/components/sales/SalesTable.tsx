@@ -14,6 +14,7 @@ const STATUS_CONFIG: Record<string, { bg: string; color: string; label: string }
   pending: { bg: 'rgba(245, 158, 11, 0.1)', color: '#fbbf24', label: 'Pendiente' },
   cancelled: { bg: 'rgba(239, 68, 68, 0.1)', color: '#f87171', label: 'Cancelado' },
   refunded: { bg: 'rgba(139, 92, 246, 0.1)', color: '#a78bfa', label: 'Reembolsado' },
+  in_mediation: { bg: 'rgba(251, 146, 60, 0.1)', color: '#fb923c', label: 'En Mediación' },
 };
 
 const FLEX_CONFIG = { bg: 'rgba(14, 165, 233, 0.1)', color: '#38bdf8', icon: '⚡', label: 'Flex' };
@@ -54,7 +55,9 @@ interface TableRowProps {
 
 const TableRow: FC<TableRowProps> = memo(({ order, onView }) => {
   const logisticConfig = LOGISTIC_CONFIG[order.logistic_type] || DEFAULT_LOGISTIC;
-  const statusConfig = STATUS_CONFIG[order.status] || DEFAULT_STATUS;
+  // Check for mediation: is_cancelled=true but status is still 'paid' means it's in mediation
+  const effectiveStatus = order.is_cancelled && order.status === 'paid' ? 'in_mediation' : order.status;
+  const statusConfig = STATUS_CONFIG[effectiveStatus] || DEFAULT_STATUS;
   const dateStr = order.date_created || order.date_approved;
 
   return (

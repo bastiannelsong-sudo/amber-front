@@ -1,5 +1,5 @@
 import { FC, memo, useEffect, useState, useMemo } from 'react';
-import { HiShoppingCart, HiCurrencyDollar, HiTruck, HiReceiptTax, HiTrendingUp, HiDocumentText } from 'react-icons/hi';
+import { HiShoppingCart, HiCurrencyDollar, HiTruck, HiReceiptTax, HiTrendingUp, HiDocumentText, HiRefresh } from 'react-icons/hi';
 import type { DailySalesSummary, LogisticTypeSummary } from '../../types/sales.types';
 
 interface Props {
@@ -9,6 +9,7 @@ interface Props {
     cross_docking: LogisticTypeSummary;
     other: LogisticTypeSummary;
   };
+  cancelledAmount: number; // Sum of cancelled/refunded orders (shown as negative)
 }
 
 // Animated Counter - extracted for reuse and memoization
@@ -441,7 +442,7 @@ const LogisticCard: FC<LogisticCardProps> = memo(({ type, data }) => {
   );
 });
 
-const DailySalesStats: FC<Props> = ({ summary, byLogisticType }) => {
+const DailySalesStats: FC<Props> = ({ summary, byLogisticType, cancelledAmount }) => {
   const profitMarginText = useMemo(() => `${summary.average_profit_margin.toFixed(1)}% margen`, [summary.average_profit_margin]);
 
   // Calculate actual shipping costs vs income
@@ -480,9 +481,21 @@ const DailySalesStats: FC<Props> = ({ summary, byLogisticType }) => {
           label="Ventas Brutas"
           value={summary.gross_amount}
           prefix="$"
+          subtitle="Total para SII"
           accentColor="#10b981"
           glowColor="rgba(16, 185, 129, 0.4)"
         />
+        {cancelledAmount > 0 && (
+          <StatCard
+            icon={<HiRefresh style={{ width: '22px', height: '22px', color: '#f43f5e' }} />}
+            label="Devoluciones"
+            value={cancelledAmount}
+            prefix="-$"
+            subtitle="Canceladas/Reembolsos"
+            accentColor="#f43f5e"
+            glowColor="rgba(244, 63, 94, 0.4)"
+          />
+        )}
         <StatCard
           icon={<HiTruck style={{ width: '22px', height: '22px', color: shippingCalculation.netShipping >= 0 ? '#10b981' : '#f43f5e' }} />}
           label="Costos Envío"
@@ -496,7 +509,7 @@ const DailySalesStats: FC<Props> = ({ summary, byLogisticType }) => {
           icon={<HiReceiptTax style={{ width: '22px', height: '22px', color: '#f43f5e' }} />}
           label="Comisiones ML"
           value={summary.marketplace_fee}
-          prefix="$"
+          prefix="-$"
           accentColor="#f43f5e"
           glowColor="rgba(244, 63, 94, 0.4)"
         />
@@ -504,7 +517,7 @@ const DailySalesStats: FC<Props> = ({ summary, byLogisticType }) => {
           icon={<HiDocumentText style={{ width: '22px', height: '22px', color: '#fb923c' }} />}
           label="IVA (19%)"
           value={summary.iva_amount || 0}
-          prefix="$"
+          prefix="-$"
           subtitle="Impuesto a la venta"
           accentColor="#fb923c"
           glowColor="rgba(251, 146, 60, 0.4)"

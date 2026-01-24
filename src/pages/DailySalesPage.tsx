@@ -93,7 +93,7 @@ const DailySalesPage: FC = () => {
   const { data, isLoading, error, refetch } = useDailySales(selectedDate, sellerId);
   const { refresh } = useRefreshDailySales();
 
-  // Memoized filtered orders - based on selected types
+  // Memoized filtered orders - based on selected logistic types (shows ALL orders including cancelled)
   const filteredOrders = useMemo(() => {
     if (!data) return [];
 
@@ -109,42 +109,51 @@ const DailySalesPage: FC = () => {
       orders.push(...data.orders.other);
     }
 
+    // Show all orders (paid + cancelled) sorted by date
     return orders.sort((a, b) =>
       new Date(b.date_created || b.date_approved).getTime() -
       new Date(a.date_created || a.date_approved).getTime()
     );
   }, [data, selectedTypes]);
 
-  // Memoized filtered summary - recalculates totals based on selected types
+  // Memoized filtered summary - recalculates totals based on selected logistic types
   const filteredSummary = useMemo((): DailySalesSummary => {
     if (!data) return emptySummary;
 
-    // If all selected, return original summary
-    if (selectedTypes.size === 3) {
-      return data.summary;
-    }
-
-    // Calculate filtered summary from selected types
-    const selectedData: LogisticTypeSummary[] = [];
+    // Get all orders from selected types
+    const allOrders: OrderSummary[] = [];
     if (selectedTypes.has('fulfillment')) {
-      selectedData.push(data.by_logistic_type.fulfillment);
+      allOrders.push(...data.orders.fulfillment);
     }
     if (selectedTypes.has('cross_docking')) {
-      selectedData.push(data.by_logistic_type.cross_docking);
+      allOrders.push(...data.orders.cross_docking);
     }
     if (selectedTypes.has('other')) {
-      selectedData.push(data.by_logistic_type.other);
+      allOrders.push(...data.orders.other);
     }
 
-    const total_orders = selectedData.reduce((sum, d) => sum + d.total_orders, 0);
-    const total_items = selectedData.reduce((sum, d) => sum + d.total_items, 0);
-    const gross_amount = selectedData.reduce((sum, d) => sum + d.gross_amount, 0);
-    const shipping_cost = selectedData.reduce((sum, d) => sum + d.shipping_cost, 0);
-    const marketplace_fee = selectedData.reduce((sum, d) => sum + d.marketplace_fee, 0);
-    const iva_amount = selectedData.reduce((sum, d) => sum + d.iva_amount, 0);
-    const flex_shipping_cost = selectedData.reduce((sum, d) => sum + (d.flex_shipping_cost || 0), 0);
-    const total_fees = selectedData.reduce((sum, d) => sum + d.total_fees, 0);
-    const net_profit = selectedData.reduce((sum, d) => sum + d.net_profit, 0);
+    // Count total orders (including cancelled for SII matching)
+    const total_orders = allOrders.length;
+
+    // Separate active and cancelled orders
+    const activeOrders = allOrders.filter((o) => !o.is_cancelled);
+
+    // Items count from all visible orders
+    const total_items = allOrders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0), 0);
+
+    // GROSS AMOUNT: Sum ALL orders (including cancelled) for SII comparison
+    const gross_amount = allOrders.reduce((sum, o) => sum + o.gross_amount, 0);
+
+    // Costs and profits: Only from active (non-cancelled) orders
+    const shipping_cost = activeOrders.reduce((sum, o) => sum + o.shipping_cost, 0);
+    const marketplace_fee = activeOrders.reduce((sum, o) => sum + o.marketplace_fee, 0);
+    const iva_amount = activeOrders.reduce((sum, o) => sum + o.iva_amount, 0);
+    const flex_shipping_cost = activeOrders.reduce((sum, o) => sum + (o.flex_shipping_cost || 0), 0);
+    const total_fees = activeOrders.reduce((sum, o) => sum + o.total_fees, 0);
+    const net_profit = activeOrders.reduce((sum, o) => sum + o.net_profit, 0);
+
+    // Gross amount only from active orders for margin calculation
+    const activeGrossAmount = activeOrders.reduce((sum, o) => sum + o.gross_amount, 0);
 
     return {
       total_orders,
@@ -156,9 +165,31 @@ const DailySalesPage: FC = () => {
       flex_shipping_cost,
       total_fees,
       net_profit,
-      average_order_value: total_orders > 0 ? gross_amount / total_orders : 0,
-      average_profit_margin: gross_amount > 0 ? (net_profit / gross_amount) * 100 : 0,
+      average_order_value: activeOrders.length > 0 ? activeGrossAmount / activeOrders.length : 0,
+      average_profit_margin: activeGrossAmount > 0 ? (net_profit / activeGrossAmount) * 100 : 0,
     };
+  }, [data, selectedTypes]);
+
+  // Memoized cancelled/refund amount (shown as negative in stats)
+  const cancelledAmount = useMemo(() => {
+    if (!data) return 0;
+
+    // Get cancelled orders from selected types
+    const allOrders: OrderSummary[] = [];
+    if (selectedTypes.has('fulfillment')) {
+      allOrders.push(...data.orders.fulfillment);
+    }
+    if (selectedTypes.has('cross_docking')) {
+      allOrders.push(...data.orders.cross_docking);
+    }
+    if (selectedTypes.has('other')) {
+      allOrders.push(...data.orders.other);
+    }
+
+    // Sum gross_amount of cancelled orders
+    return allOrders
+      .filter((o) => o.is_cancelled)
+      .reduce((sum, o) => sum + o.gross_amount, 0);
   }, [data, selectedTypes]);
 
   // Memoized filtered byLogisticType - only show selected types
@@ -502,10 +533,10 @@ const DailySalesPage: FC = () => {
           </div>
         </header>
 
-        {/* Tabs - Above stats now */}
+        {/* Filters - Logistic Type */}
         <section
           className="animate-fade-up stagger-1"
-          style={{ opacity: 0 }}
+          style={{ opacity: 0, display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'flex-start' }}
         >
           <LogisticTypeTabs
             selectedTypes={selectedTypes}
@@ -523,6 +554,7 @@ const DailySalesPage: FC = () => {
             <DailySalesStats
               summary={filteredSummary}
               byLogisticType={filteredByLogisticType}
+              cancelledAmount={cancelledAmount}
             />
           ) : (
             <StatsSkeleton />
