@@ -1,14 +1,18 @@
-import { FC, useState, useMemo, useCallback, memo, Suspense, lazy, useEffect } from 'react';
+import { FC, useState, useMemo, useCallback, memo, Suspense, lazy } from 'react';
 import { HiRefresh, HiDownload, HiSparkles } from 'react-icons/hi';
-import { useDailySales, useRefreshDailySales } from '../hooks/useDailySales';
+import { useDateRangeSales } from '../hooks/useDailySales';
+import { useSyncDateRange } from '../hooks/useSyncDateRange';
 import { useAuthStore } from '../store/authStore';
-import { useThemeStore, useApplyTheme } from '../store/themeStore';
+import { useApplyTheme } from '../store/themeStore';
 import AppHeader from '../components/layout/AppHeader';
-import DateSelector from '../components/sales/DateSelector';
+import DateRangeSelector from '../components/sales/DateRangeSelector';
+import SyncProgressModal from '../components/sales/SyncProgressModal';
 import DailySalesStats from '../components/sales/DailySalesStats';
 import LogisticTypeTabs from '../components/sales/LogisticTypeTabs';
 import SalesTable from '../components/sales/SalesTable';
-import type { OrderSummary, LogisticType, DailySalesSummary, LogisticTypeSummary } from '../types/sales.types';
+import { exportOrdersToExcel } from '../utils/excelExport';
+import salesService from '../services/sales.service';
+import type { OrderSummary, LogisticType, DailySalesSummary, LogisticTypeSummary, DateRange, PaginationParams, DateMode } from '../types/sales.types';
 import '../styles/dashboard.css';
 
 // Lazy load modal for better initial bundle
@@ -37,8 +41,24 @@ const formatDisplayDate = (dateStr: string): string => {
   });
 };
 
-// Get initial date (lazy initialization)
-const getInitialDate = (): string => new Date().toISOString().split('T')[0];
+// Format date range for display
+const formatDateRangeDisplay = (range: DateRange): string => {
+  if (range.from === range.to) {
+    return formatDisplayDate(range.from);
+  }
+  const fromDate = new Date(range.from + 'T12:00:00');
+  const toDate = new Date(range.to + 'T12:00:00');
+  const fromStr = fromDate.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' });
+  const toStr = toDate.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' });
+  return `${fromStr} - ${toStr}`;
+};
+
+// Get initial date range (today only)
+const getInitialDateRange = (): DateRange => {
+  const iso = new Date().toISOString();
+  const today = iso.split('T')[0] as string;
+  return { from: today, to: today };
+};
 
 // Default selection: all types selected
 const getInitialSelection = (): Set<LogisticType> => new Set(['fulfillment', 'cross_docking', 'other']);
@@ -52,10 +72,18 @@ const emptySummary: DailySalesSummary = {
   marketplace_fee: 0,
   iva_amount: 0,
   flex_shipping_cost: 0,
+  shipping_bonus: 0,
+  courier_cost: 0,
   total_fees: 0,
   net_profit: 0,
   average_order_value: 0,
   average_profit_margin: 0,
+  cancelled_count: 0,
+  cancelled_amount: 0,
+  mediation_count: 0,
+  mediation_amount: 0,
+  refunded_count: 0,
+  refunded_amount: 0,
 };
 
 // Empty logistic type summary
@@ -69,130 +97,196 @@ const emptyLogisticSummary: LogisticTypeSummary = {
   marketplace_fee: 0,
   iva_amount: 0,
   flex_shipping_cost: 0,
+  shipping_bonus: 0,
+  courier_cost: 0,
   total_fees: 0,
   net_profit: 0,
   average_order_value: 0,
   average_profit_margin: 0,
+  cancelled_count: 0,
+  cancelled_amount: 0,
+  mediation_count: 0,
+  mediation_amount: 0,
+  refunded_count: 0,
+  refunded_amount: 0,
 };
+
+// Map raw logistic_type values to their filter category
+// Must match backend classification in order.service.ts
+const getLogisticCategory = (logisticType: string): LogisticType => {
+  if (logisticType === 'fulfillment') return 'fulfillment';
+  if (logisticType === 'self_service' || logisticType === 'self_service_cost') return 'cross_docking';
+  return 'other';
+};
+
+// Page size for pagination
+const PAGE_SIZE = 20;
 
 const DailySalesPage: FC = () => {
   // Apply theme to document
   useApplyTheme();
 
   // State with lazy initialization
-  const [selectedDate, setSelectedDate] = useState(getInitialDate);
+  const [dateRange, setDateRange] = useState<DateRange>(getInitialDateRange);
   const [selectedTypes, setSelectedTypes] = useState<Set<LogisticType>>(getInitialSelection);
   const [selectedOrder, setSelectedOrder] = useState<OrderSummary | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [dateMode, setDateMode] = useState<DateMode>('sii');
 
   // Auth - Get seller ID from session
   const user = useAuthStore((state) => state.user);
   const sellerId = user?.userId ? parseInt(user.userId) : 0;
 
-  // Data fetching
-  const { data, isLoading, error, refetch } = useDailySales(selectedDate, sellerId);
-  const { refresh } = useRefreshDailySales();
+  // Calculate the logistic_type filter for the API
+  const logisticTypeFilter = useMemo((): LogisticType | undefined => {
+    const selected = Array.from(selectedTypes);
+    // If all types are selected, don't filter
+    if (selected.length === 3) return undefined;
+    // If only one type is selected, use it as filter
+    if (selected.length === 1) return selected[0];
+    // If multiple but not all, return undefined (will filter client-side)
+    return undefined;
+  }, [selectedTypes]);
 
-  // Memoized filtered orders - based on selected logistic types (shows ALL orders including cancelled)
+  // When 2 types selected, client-side filtering needs ALL orders (not just one page)
+  // because backend can only filter by 1 type. Fetch all so filtering is complete.
+  const isClientSideFiltering = selectedTypes.size === 2;
+
+  // Pagination params for the API
+  const paginationParams: PaginationParams = useMemo(() => ({
+    page: isClientSideFiltering ? 1 : currentPage,
+    limit: isClientSideFiltering ? 10000 : PAGE_SIZE,
+    logistic_type: logisticTypeFilter,
+    date_mode: dateMode,
+  }), [currentPage, logisticTypeFilter, isClientSideFiltering, dateMode]);
+
+  // Data fetching with date range and pagination
+  const { data, isLoading, isFetching, error, refetch } = useDateRangeSales(dateRange, sellerId, paginationParams);
+
+  // Sync with progress
+  const { progress: syncProgress, syncDateRange, cancelSync, resetProgress } = useSyncDateRange();
+
+  // Orders: when backend filters by 1 type, orders are pre-filtered.
+  // When 2 types selected, backend returns all orders → filter client-side.
   const filteredOrders = useMemo(() => {
     if (!data) return [];
-
-    const orders: OrderSummary[] = [];
-
-    if (selectedTypes.has('fulfillment')) {
-      orders.push(...data.orders.fulfillment);
-    }
-    if (selectedTypes.has('cross_docking')) {
-      orders.push(...data.orders.cross_docking);
-    }
-    if (selectedTypes.has('other')) {
-      orders.push(...data.orders.other);
-    }
-
-    // Show all orders (paid + cancelled) sorted by date
-    return orders.sort((a, b) =>
-      new Date(b.date_created || b.date_approved).getTime() -
-      new Date(a.date_created || a.date_approved).getTime()
-    );
+    // If all types or exactly 1 type (backend-filtered), use as-is
+    if (selectedTypes.size === 3 || selectedTypes.size === 1) return data.orders;
+    // 2 types selected: filter client-side
+    return data.orders.filter((o) => selectedTypes.has(getLogisticCategory(o.logistic_type)));
   }, [data, selectedTypes]);
 
-  // Memoized filtered summary - recalculates totals based on selected logistic types
+  // Packs: same client-side filtering logic for pack groups
+  const filteredPacks = useMemo(() => {
+    if (!data?.packs) return undefined;
+    if (selectedTypes.size === 3 || selectedTypes.size === 1) return data.packs;
+    return data.packs.filter((p) => selectedTypes.has(getLogisticCategory(p.logistic_type)));
+  }, [data, selectedTypes]);
+
+  // Summary recalculated based on selected logistic types
+  // When filtering, sum only the selected types from by_logistic_type
   const filteredSummary = useMemo((): DailySalesSummary => {
     if (!data) return emptySummary;
 
-    // Get all orders from selected types
-    const allOrders: OrderSummary[] = [];
-    if (selectedTypes.has('fulfillment')) {
-      allOrders.push(...data.orders.fulfillment);
-    }
-    if (selectedTypes.has('cross_docking')) {
-      allOrders.push(...data.orders.cross_docking);
-    }
-    if (selectedTypes.has('other')) {
-      allOrders.push(...data.orders.other);
-    }
+    // If all types selected, use the backend total summary
+    if (selectedTypes.size === 3) return data.summary;
 
-    // Count total orders (including cancelled for SII matching)
-    const total_orders = allOrders.length;
+    // Sum only the selected logistic types
+    const types: LogisticType[] = ['fulfillment', 'cross_docking', 'other'];
+    const selectedSummaries = types
+      .filter((t) => selectedTypes.has(t))
+      .map((t) => data.by_logistic_type[t]);
 
-    // Separate active and cancelled orders
-    const activeOrders = allOrders.filter((o) => !o.is_cancelled);
+    if (selectedSummaries.length === 0) return emptySummary;
 
-    // Items count from all visible orders
-    const total_items = allOrders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0), 0);
-
-    // GROSS AMOUNT: Sum ALL orders (including cancelled) for SII comparison
-    const gross_amount = allOrders.reduce((sum, o) => sum + o.gross_amount, 0);
-
-    // Costs and profits: Only from active (non-cancelled) orders
-    const shipping_cost = activeOrders.reduce((sum, o) => sum + o.shipping_cost, 0);
-    const marketplace_fee = activeOrders.reduce((sum, o) => sum + o.marketplace_fee, 0);
-    const iva_amount = activeOrders.reduce((sum, o) => sum + o.iva_amount, 0);
-    const flex_shipping_cost = activeOrders.reduce((sum, o) => sum + (o.flex_shipping_cost || 0), 0);
-    const total_fees = activeOrders.reduce((sum, o) => sum + o.total_fees, 0);
-    const net_profit = activeOrders.reduce((sum, o) => sum + o.net_profit, 0);
-
-    // Gross amount only from active orders for margin calculation
-    const activeGrossAmount = activeOrders.reduce((sum, o) => sum + o.gross_amount, 0);
+    const total_orders = selectedSummaries.reduce((s, t) => s + t.total_orders, 0);
+    const gross_amount = selectedSummaries.reduce((s, t) => s + t.gross_amount, 0);
+    const net_profit = selectedSummaries.reduce((s, t) => s + t.net_profit, 0);
 
     return {
       total_orders,
-      total_items,
+      total_items: selectedSummaries.reduce((s, t) => s + t.total_items, 0),
       gross_amount,
-      shipping_cost,
-      marketplace_fee,
-      iva_amount,
-      flex_shipping_cost,
-      total_fees,
+      shipping_cost: selectedSummaries.reduce((s, t) => s + t.shipping_cost, 0),
+      marketplace_fee: selectedSummaries.reduce((s, t) => s + t.marketplace_fee, 0),
+      iva_amount: selectedSummaries.reduce((s, t) => s + t.iva_amount, 0),
+      flex_shipping_cost: selectedSummaries.reduce((s, t) => s + t.flex_shipping_cost, 0),
+      shipping_bonus: selectedSummaries.reduce((s, t) => s + t.shipping_bonus, 0),
+      courier_cost: selectedSummaries.reduce((s, t) => s + (t.courier_cost || 0), 0),
+      total_fees: selectedSummaries.reduce((s, t) => s + t.total_fees, 0),
       net_profit,
-      average_order_value: activeOrders.length > 0 ? activeGrossAmount / activeOrders.length : 0,
-      average_profit_margin: activeGrossAmount > 0 ? (net_profit / activeGrossAmount) * 100 : 0,
+      average_order_value: total_orders > 0 ? gross_amount / total_orders : 0,
+      average_profit_margin: gross_amount > 0 ? (net_profit / gross_amount) * 100 : 0,
+      cancelled_count: selectedSummaries.reduce((s, t) => s + (t.cancelled_count || 0), 0),
+      cancelled_amount: selectedSummaries.reduce((s, t) => s + (t.cancelled_amount || 0), 0),
+      mediation_count: selectedSummaries.reduce((s, t) => s + (t.mediation_count || 0), 0),
+      mediation_amount: selectedSummaries.reduce((s, t) => s + (t.mediation_amount || 0), 0),
+      refunded_count: selectedSummaries.reduce((s, t) => s + (t.refunded_count || 0), 0),
+      refunded_amount: selectedSummaries.reduce((s, t) => s + (t.refunded_amount || 0), 0),
     };
   }, [data, selectedTypes]);
 
-  // Memoized cancelled/refund amount (shown as negative in stats)
-  const cancelledAmount = useMemo(() => {
-    if (!data) return 0;
+  // Adjusted pagination: when 2 types selected, all data is fetched → no pagination needed
+  const adjustedPagination = useMemo(() => {
+    if (!data?.pagination) return undefined;
+    // 2 types selected: all orders fetched, client-side filtering → no pagination
+    if (isClientSideFiltering) return undefined;
+    // All 3 or 1 type: backend handles pagination
+    return data.pagination;
+  }, [data, isClientSideFiltering]);
 
-    // Get cancelled orders from selected types
-    const allOrders: OrderSummary[] = [];
-    if (selectedTypes.has('fulfillment')) {
-      allOrders.push(...data.orders.fulfillment);
-    }
-    if (selectedTypes.has('cross_docking')) {
-      allOrders.push(...data.orders.cross_docking);
-    }
-    if (selectedTypes.has('other')) {
-      allOrders.push(...data.orders.other);
-    }
+  // Shipping calculation based on selected logistic types
+  // Includes all shipping-related components so stat cards add up to net_profit:
+  // Ganancia = Ventas Brutas - Canceladas + Envío Neto - Comisiones - IVA
+  const shippingCalculation = useMemo(() => {
+    if (!data) return { shippingNet: 0, shippingIncome: 0, flexShippingCost: 0, shippingBonus: 0 };
 
-    // Sum gross_amount of cancelled orders
-    return allOrders
-      .filter((o) => o.is_cancelled)
-      .reduce((sum, o) => sum + o.gross_amount, 0);
+    const fulfillment = data.by_logistic_type.fulfillment;
+    const flex = data.by_logistic_type.cross_docking;
+    const other = data.by_logistic_type.other;
+
+    // Only include types that are currently selected
+    const includesFlex = selectedTypes.has('cross_docking');
+    const includesFull = selectedTypes.has('fulfillment');
+    const includesOther = selectedTypes.has('other');
+
+    // Shipping income from Flex (shipping_cost in Flex is income from buyer)
+    const shippingIncome = includesFlex ? flex.shipping_cost : 0;
+
+    // Fazt cost from Flex orders
+    const flexShippingCost = includesFlex ? (flex.flex_shipping_cost || 0) : 0;
+
+    // Note: courier_cost (senders[0].cost from ML API) is informational only — ML does NOT
+    // charge this for Flex orders. The real courier cost is fazt_cost (flexShippingCost).
+
+    // Shipping bonus from ML (bonificación por envío gratis >$20k)
+    const shippingBonus =
+      (includesFlex ? (flex.shipping_bonus || 0) : 0) +
+      (includesFull ? (fulfillment.shipping_bonus || 0) : 0) +
+      (includesOther ? (other.shipping_bonus || 0) : 0);
+
+    // Non-Flex shipping cost: ML shipping cost for Full/Centro
+    const nonFlexShippingCost =
+      (includesFull ? fulfillment.shipping_cost : 0) +
+      (includesOther ? other.shipping_cost : 0);
+
+    // Net shipping = income + bonus - Fazt cost - ML cost
+    const shippingNet = shippingIncome + shippingBonus - flexShippingCost - nonFlexShippingCost;
+
+    return { shippingNet, shippingIncome, flexShippingCost, shippingBonus };
   }, [data, selectedTypes]);
 
-  // Memoized filtered byLogisticType - only show selected types
+  // Cancelled/mediation/refunded stats from backend summary (already filtered by selected logistic types)
+  const cancelledAmount = filteredSummary.cancelled_amount || 0;
+  const cancelledCount = filteredSummary.cancelled_count || 0;
+  const mediationAmount = filteredSummary.mediation_amount || 0;
+  const mediationCount = filteredSummary.mediation_count || 0;
+  const refundedAmount = filteredSummary.refunded_amount || 0;
+  const refundedCount = filteredSummary.refunded_count || 0;
+  // Total of all inactive orders (for Ventas Brutas card)
+  const totalInactiveAmount = cancelledAmount + mediationAmount + refundedAmount;
+
+  // By logistic type - zero out unselected types so stats reflect the filter
   const filteredByLogisticType = useMemo(() => {
     if (!data) {
       return {
@@ -201,7 +295,6 @@ const DailySalesPage: FC = () => {
         other: emptyLogisticSummary,
       };
     }
-
     return {
       fulfillment: selectedTypes.has('fulfillment') ? data.by_logistic_type.fulfillment : emptyLogisticSummary,
       cross_docking: selectedTypes.has('cross_docking') ? data.by_logistic_type.cross_docking : emptyLogisticSummary,
@@ -209,7 +302,7 @@ const DailySalesPage: FC = () => {
     };
   }, [data, selectedTypes]);
 
-  // Memoized counts for tabs (always show real counts, not filtered)
+  // Counts for tabs (always show real counts from all orders)
   const tabCounts = useMemo(() => {
     if (!data) return { fulfillment: 0, cross_docking: 0, other: 0 };
     return {
@@ -220,19 +313,55 @@ const DailySalesPage: FC = () => {
   }, [data]);
 
   // Stable callback handlers
-  const handleDateChange = useCallback((date: string) => {
-    setSelectedDate(date);
+  const handleDateRangeChange = useCallback((range: DateRange) => {
+    setDateRange(range);
     setSelectedTypes(getInitialSelection()); // Reset to all selected on date change
+    setCurrentPage(1); // Reset to first page on date change
   }, []);
 
-  const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
+
+  const handleSync = useCallback(async () => {
+    await syncDateRange(dateRange, sellerId);
+  }, [dateRange, sellerId, syncDateRange]);
+
+  const handleSyncModalClose = useCallback(() => {
+    resetProgress();
+    refetch(); // Refresh data after sync
+  }, [resetProgress, refetch]);
+
+  // Get current logistic filter for export
+  const getLogisticFilterForExport = useCallback((): string | null => {
+    const selected = Array.from(selectedTypes);
+    if (selected.length === 3) return null; // All selected
+    if (selected.length === 1) return selected[0] ?? null;
+    return null;
+  }, [selectedTypes]);
+
+  const handleExport = useCallback(async () => {
+    if (!data) return;
+
+    // For export, we need all orders not just the current page
+    // Fetch all orders with limit set to a large number
     try {
-      await refresh(selectedDate, sellerId);
-    } finally {
-      setIsRefreshing(false);
+      const allData = await salesService.getDateRangeSales(
+        dateRange,
+        sellerId,
+        { page: 1, limit: 10000, logistic_type: logisticTypeFilter, date_mode: dateMode }
+      );
+
+      exportOrdersToExcel({
+        orders: allData.orders,
+        fromDate: dateRange.from,
+        toDate: dateRange.to,
+        logisticTypeFilter: getLogisticFilterForExport(),
+      });
+    } catch (error) {
+      console.error('Error exporting orders:', error);
     }
-  }, [selectedDate, sellerId, refresh]);
+  }, [data, dateRange, sellerId, logisticTypeFilter, dateMode, getLogisticFilterForExport]);
 
   const handleViewOrder = useCallback((order: OrderSummary) => {
     setSelectedOrder(order);
@@ -244,6 +373,7 @@ const DailySalesPage: FC = () => {
 
   const handleSelectionChange = useCallback((types: Set<LogisticType>) => {
     setSelectedTypes(types);
+    setCurrentPage(1); // Reset to first page when filter changes
   }, []);
 
   // Early return for loading state
@@ -326,7 +456,7 @@ const DailySalesPage: FC = () => {
                 className="text-body"
                 style={{ color: 'var(--text-tertiary)' }}
               >
-                Obteniendo ventas del {formatDisplayDate(selectedDate)}
+                Obteniendo ventas del {formatDateRangeDisplay(dateRange)}
               </p>
             </div>
 
@@ -506,35 +636,89 @@ const DailySalesPage: FC = () => {
             {/* Action Buttons */}
             <div style={{ display: 'flex', gap: 'clamp(8px, 2vw, 12px)', flexShrink: 0 }}>
               <button
-                onClick={handleRefresh}
-                disabled={isRefreshing}
+                onClick={handleSync}
+                disabled={syncProgress.isSync}
                 className="btn-secondary btn-compact"
-                style={{ opacity: isRefreshing ? 0.5 : 1 }}
+                style={{ opacity: syncProgress.isSync ? 0.5 : 1 }}
               >
                 <HiRefresh
                   className="btn-icon"
                   style={{
                     width: '18px',
                     height: '18px',
-                    animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
+                    animation: syncProgress.isSync ? 'spin 1s linear infinite' : 'none',
                   }}
                 />
-                <span>{isRefreshing ? 'Sincronizando...' : 'Sincronizar'}</span>
+                <span>{syncProgress.isSync ? 'Sincronizando...' : 'Sincronizar'}</span>
               </button>
 
-              <button className="btn-primary btn-compact">
+              <button
+                onClick={handleExport}
+                disabled={!data || filteredOrders.length === 0}
+                className="btn-primary btn-compact"
+                style={{ opacity: !data || filteredOrders.length === 0 ? 0.5 : 1 }}
+              >
                 <HiDownload className="btn-icon" style={{ width: '18px', height: '18px' }} />
                 <span>Exportar</span>
               </button>
             </div>
           </div>
 
-          {/* Date Selector */}
-          <div style={{ marginTop: 'clamp(16px, 3vw, 24px)' }}>
-            <DateSelector
-              selectedDate={selectedDate}
-              onDateChange={handleDateChange}
+          {/* Date Range Selector + Date Mode Toggle */}
+          <div style={{ marginTop: 'clamp(16px, 3vw, 24px)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '16px' }}>
+            <DateRangeSelector
+              dateRange={dateRange}
+              onDateRangeChange={handleDateRangeChange}
             />
+
+            {/* Date Mode Toggle: SII vs Mercado Libre */}
+            <div
+              style={{
+                display: 'inline-flex',
+                borderRadius: '10px',
+                border: '1px solid var(--border-primary)',
+                background: 'var(--bg-secondary)',
+                padding: '3px',
+                gap: '2px',
+              }}
+            >
+              <button
+                onClick={() => setDateMode('sii')}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  transition: 'all 0.2s ease',
+                  background: dateMode === 'sii'
+                    ? 'linear-gradient(135deg, #f59e0b, #ea580c)'
+                    : 'transparent',
+                  color: dateMode === 'sii' ? '#fff' : 'var(--text-tertiary)',
+                }}
+              >
+                SII
+              </button>
+              <button
+                onClick={() => setDateMode('mercado_libre')}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  transition: 'all 0.2s ease',
+                  background: dateMode === 'mercado_libre'
+                    ? 'linear-gradient(135deg, #3483fa, #2968c8)'
+                    : 'transparent',
+                  color: dateMode === 'mercado_libre' ? '#fff' : 'var(--text-tertiary)',
+                }}
+              >
+                Mercado Libre
+              </button>
+            </div>
           </div>
         </header>
 
@@ -560,6 +744,16 @@ const DailySalesPage: FC = () => {
               summary={filteredSummary}
               byLogisticType={filteredByLogisticType}
               cancelledAmount={cancelledAmount}
+              cancelledCount={cancelledCount}
+              mediationAmount={mediationAmount}
+              mediationCount={mediationCount}
+              refundedAmount={refundedAmount}
+              refundedCount={refundedCount}
+              totalInactiveAmount={totalInactiveAmount}
+              shippingNet={shippingCalculation.shippingNet}
+              shippingIncome={shippingCalculation.shippingIncome}
+              flexShippingCost={shippingCalculation.flexShippingCost}
+              shippingBonus={shippingCalculation.shippingBonus}
             />
           ) : (
             <StatsSkeleton />
@@ -573,12 +767,16 @@ const DailySalesPage: FC = () => {
         >
           <SalesTable
             orders={filteredOrders}
+            packs={filteredPacks}
             onViewOrder={handleViewOrder}
+            pagination={adjustedPagination}
+            onPageChange={handlePageChange}
+            isLoading={isFetching}
           />
         </section>
 
-        {/* Results Summary */}
-        {data && data.summary.total_orders > 0 && (
+        {/* Results Summary - Only show if no pagination (pagination has its own info) */}
+        {data && data.summary.total_orders > 0 && !data.pagination && (
           <div
             className="animate-fade-up stagger-4"
             style={{
@@ -604,7 +802,7 @@ const DailySalesPage: FC = () => {
                   textTransform: 'capitalize',
                 }}
               >
-                {formatDisplayDate(selectedDate)}
+                {formatDateRangeDisplay(dateRange)}
               </span>
             </p>
           </div>
@@ -621,6 +819,15 @@ const DailySalesPage: FC = () => {
           />
         )}
       </Suspense>
+
+      {/* Sync Progress Modal */}
+      {(syncProgress.isSync || syncProgress.phase !== 'idle') && (
+        <SyncProgressModal
+          progress={syncProgress}
+          onCancel={cancelSync}
+          onClose={handleSyncModalClose}
+        />
+      )}
 
       {/* Keyframe for spin animation */}
       <style>{`

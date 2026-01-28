@@ -6,6 +6,7 @@ import ProductInventoryPage from "./pages/ProductInventoryPage";
 import PendingSalesPage from "./pages/PendingSalesPage";
 import DailySalesPage from "./pages/DailySalesPage";
 import FlexCostsPage from "./pages/FlexCostsPage";
+import FaztConfigPage from "./pages/FaztConfigPage";
 import FlowbiteWrapper from "./components/flowbite-wrapper";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Login from "./pages/authentication/login";
@@ -49,6 +50,9 @@ const App: FC = function () {
 
             {/* Costos Envío Flex */}
             <Route path="/flex-costs" element={<FlexCostsPage />} />
+
+            {/* Configuración Fazt */}
+            <Route path="/fazt-config" element={<FaztConfigPage />} />
 
             {/* Redirect old route to new one */}
             <Route path="/e-commerce/products" element={<EcommerceProductsPage />} />

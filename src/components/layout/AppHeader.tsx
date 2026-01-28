@@ -33,6 +33,12 @@ const NAV_ITEMS = [
     description: 'Costos envío Flex mensual',
   },
   {
+    path: '/fazt-config',
+    label: 'Fazt',
+    icon: HiTruck,
+    description: 'Tarifas Fazt por volumen',
+  },
+  {
     path: '/inventory',
     label: 'Inventario',
     icon: HiCube,

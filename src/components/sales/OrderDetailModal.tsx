@@ -15,7 +15,8 @@ const getStatusConfig = (status: string) => {
     approved: { bg: 'rgba(16, 185, 129, 0.1)', color: '#34d399', border: 'rgba(16, 185, 129, 0.3)', label: 'Aprobado' },
     pending: { bg: 'rgba(245, 158, 11, 0.1)', color: '#fbbf24', border: 'rgba(245, 158, 11, 0.3)', label: 'Pendiente' },
     cancelled: { bg: 'rgba(239, 68, 68, 0.1)', color: '#f87171', border: 'rgba(239, 68, 68, 0.3)', label: 'Cancelado' },
-    refunded: { bg: 'rgba(139, 92, 246, 0.1)', color: '#a78bfa', border: 'rgba(139, 92, 246, 0.3)', label: 'Reembolsado' },
+    in_mediation: { bg: 'rgba(251, 146, 60, 0.1)', color: '#fb923c', border: 'rgba(251, 146, 60, 0.3)', label: 'En Mediación' },
+    refunded: { bg: 'rgba(139, 92, 246, 0.1)', color: '#a78bfa', border: 'rgba(139, 92, 246, 0.3)', label: 'Devolución' },
   };
   return configs[status] || { bg: 'rgba(113, 113, 122, 0.1)', color: '#a1a1aa', border: 'rgba(113, 113, 122, 0.3)', label: status };
 };
@@ -64,12 +65,11 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
 
   if (!isOpen || !order) return null;
 
-  // Debug: Log buyer data
-  console.log('[OrderDetailModal] Order buyer data:', order.buyer);
-  console.log('[OrderDetailModal] Full order:', order);
+  // Get buyer display name (receiver name if available, else nickname)
+  const buyerName = order.buyer?.receiver_name || order.buyer?.nickname || '?';
 
   const logisticConfig = getLogisticConfig(order.logistic_type);
-  const statusConfig = getStatusConfig(order.status);
+  const statusConfig = getStatusConfig(order.cancellation_type || order.status);
 
   // Format date
   const formatDate = (dateStr: string) => {
@@ -268,175 +268,81 @@ const OrderDetailModal: FC<Props> = ({ order, isOpen, onClose }) => {
 
         {/* Content - Scrollable */}
         <div style={{ overflowY: 'auto', maxHeight: 'calc(90vh - 200px)', padding: 'clamp(16px, 4vw, 24px)', display: 'flex', flexDirection: 'column', gap: 'clamp(16px, 4vw, 24px)' }}>
-          {/* Buyer Info */}
+
+          {/* Buyer Info - Simple version that works */}
           {order.buyer && (
-            <div
-              style={{
-                borderRadius: '16px',
-                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(139, 92, 246, 0.02))',
-                border: '1px solid rgba(139, 92, 246, 0.2)',
-                overflow: 'hidden',
-              }}
-            >
-              {/* Buyer Header */}
-              <div
-                style={{
-                  padding: '16px 20px',
-                  borderBottom: '1px solid rgba(139, 92, 246, 0.15)',
+            <div style={{
+              padding: '16px',
+              backgroundColor: 'rgba(139, 92, 246, 0.15)',
+              border: '1px solid rgba(139, 92, 246, 0.4)',
+              borderRadius: '12px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                  {/* Avatar */}
-                  <div
-                    style={{
-                      width: '52px',
-                      height: '52px',
-                      borderRadius: '14px',
-                      background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 4px 12px -2px rgba(139, 92, 246, 0.4)',
-                    }}
-                  >
-                    <span style={{ fontSize: '22px', fontWeight: 700, color: '#ffffff' }}>
-                      {order.buyer.first_name?.[0]?.toUpperCase() || order.buyer.nickname?.[0]?.toUpperCase() || '?'}
-                    </span>
-                  </div>
-                  {/* Name */}
-                  <div>
-                    <p style={{ fontSize: '11px', fontWeight: 600, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
-                      Comprador
-                    </p>
-                    <p style={{ fontSize: '17px', fontWeight: 700, color: '#ffffff', margin: '4px 0 0 0' }}>
-                      {order.buyer.first_name && order.buyer.last_name
-                        ? `${order.buyer.first_name} ${order.buyer.last_name}`
-                        : order.buyer.nickname || 'Sin nombre'}
-                    </p>
-                  </div>
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <span style={{ fontSize: '20px', fontWeight: 700, color: 'white' }}>
+                    {buyerName.charAt(0).toUpperCase()}
+                  </span>
                 </div>
-                {/* Profile Link */}
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: '11px', color: '#a78bfa', fontWeight: 600, textTransform: 'uppercase', margin: 0 }}>
+                    Comprador
+                  </p>
+                  <p style={{ fontSize: '16px', color: 'white', fontWeight: 700, margin: '4px 0 0 0' }}>
+                    {buyerName}
+                  </p>
+                </div>
                 <a
                   href={`https://perfil.mercadolibre.cl/${order.buyer.nickname}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
-                    padding: '8px 14px',
-                    borderRadius: '10px',
-                    backgroundColor: 'rgba(139, 92, 246, 0.15)',
-                    border: '1px solid rgba(139, 92, 246, 0.3)',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                    border: '1px solid rgba(139, 92, 246, 0.4)',
                     color: '#a78bfa',
-                    fontSize: '13px',
+                    fontSize: '12px',
                     fontWeight: 600,
                     textDecoration: 'none',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.25)';
-                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.5)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.15)';
-                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
+                    gap: '4px',
                   }}
                 >
                   <HiExternalLink style={{ width: '14px', height: '14px' }} />
-                  Ver perfil
+                  Perfil
                 </a>
               </div>
 
-              {/* Buyer Details Grid */}
-              <div style={{ padding: 'clamp(12px, 3vw, 16px) clamp(14px, 3.5vw, 20px)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'clamp(10px, 2.5vw, 16px)' }}>
-                {/* Nombre Destinatario - Full width */}
-                <div
-                  style={{
-                    padding: '12px 14px',
-                    borderRadius: '10px',
-                    backgroundColor: 'rgba(39, 39, 42, 0.5)',
-                    border: '1px solid rgba(63, 63, 70, 0.3)',
-                    gridColumn: '1 / -1',
-                  }}
-                >
-                  <p style={{ fontSize: '11px', fontWeight: 600, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
-                    Nombre Destinatario
-                  </p>
-                  <p style={{ fontSize: '14px', fontWeight: 600, color: '#e4e4e7', margin: '4px 0 0 0' }}>
-                    {order.buyer.receiver_name || (order.buyer.first_name && order.buyer.last_name ? `${order.buyer.first_name} ${order.buyer.last_name}` : '—')}
-                  </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+                <div style={{ padding: '10px 12px', backgroundColor: 'rgba(39, 39, 42, 0.6)', borderRadius: '8px', gridColumn: '1 / -1' }}>
+                  <p style={{ fontSize: '10px', color: '#71717a', fontWeight: 600, textTransform: 'uppercase', margin: 0 }}>Nombre Destinatario</p>
+                  <p style={{ fontSize: '14px', color: '#e4e4e7', fontWeight: 600, margin: '4px 0 0 0' }}>{buyerName}</p>
                 </div>
-
-                {/* RUT */}
-                <div
-                  style={{
-                    padding: '12px 14px',
-                    borderRadius: '10px',
-                    backgroundColor: 'rgba(39, 39, 42, 0.5)',
-                    border: '1px solid rgba(63, 63, 70, 0.3)',
-                  }}
-                >
-                  <p style={{ fontSize: '11px', fontWeight: 600, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
-                    RUT
-                  </p>
-                  <p style={{ fontSize: '14px', fontWeight: 600, color: '#e4e4e7', margin: '4px 0 0 0', fontFamily: "'JetBrains Mono', monospace" }}>
-                    {order.buyer.receiver_rut || '—'}
-                  </p>
+                <div style={{ padding: '10px 12px', backgroundColor: 'rgba(39, 39, 42, 0.6)', borderRadius: '8px' }}>
+                  <p style={{ fontSize: '10px', color: '#71717a', fontWeight: 600, textTransform: 'uppercase', margin: 0 }}>RUT</p>
+                  <p style={{ fontSize: '14px', color: '#e4e4e7', fontWeight: 600, margin: '4px 0 0 0', fontFamily: 'monospace' }}>{order.buyer.receiver_rut || '—'}</p>
                 </div>
-
-                {/* Teléfono */}
-                <div
-                  style={{
-                    padding: '12px 14px',
-                    borderRadius: '10px',
-                    backgroundColor: 'rgba(39, 39, 42, 0.5)',
-                    border: '1px solid rgba(63, 63, 70, 0.3)',
-                  }}
-                >
-                  <p style={{ fontSize: '11px', fontWeight: 600, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
-                    Teléfono
-                  </p>
-                  <p style={{ fontSize: '14px', fontWeight: 600, color: '#e4e4e7', margin: '4px 0 0 0', fontFamily: "'JetBrains Mono', monospace" }}>
-                    {order.buyer.receiver_phone || '—'}
-                  </p>
+                <div style={{ padding: '10px 12px', backgroundColor: 'rgba(39, 39, 42, 0.6)', borderRadius: '8px' }}>
+                  <p style={{ fontSize: '10px', color: '#71717a', fontWeight: 600, textTransform: 'uppercase', margin: 0 }}>Teléfono</p>
+                  <p style={{ fontSize: '14px', color: '#e4e4e7', fontWeight: 600, margin: '4px 0 0 0', fontFamily: 'monospace' }}>{order.buyer.receiver_phone || '—'}</p>
                 </div>
-
-                {/* Nickname */}
-                <div
-                  style={{
-                    padding: '12px 14px',
-                    borderRadius: '10px',
-                    backgroundColor: 'rgba(39, 39, 42, 0.5)',
-                    border: '1px solid rgba(63, 63, 70, 0.3)',
-                  }}
-                >
-                  <p style={{ fontSize: '11px', fontWeight: 600, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
-                    Usuario ML
-                  </p>
-                  <p style={{ fontSize: '14px', fontWeight: 600, color: '#e4e4e7', margin: '4px 0 0 0', fontFamily: "'JetBrains Mono', monospace" }}>
-                    @{order.buyer.nickname || '—'}
-                  </p>
+                <div style={{ padding: '10px 12px', backgroundColor: 'rgba(39, 39, 42, 0.6)', borderRadius: '8px' }}>
+                  <p style={{ fontSize: '10px', color: '#71717a', fontWeight: 600, textTransform: 'uppercase', margin: 0 }}>Usuario ML</p>
+                  <p style={{ fontSize: '14px', color: '#e4e4e7', fontWeight: 600, margin: '4px 0 0 0', fontFamily: 'monospace' }}>@{order.buyer.nickname || '—'}</p>
                 </div>
-
-                {/* Buyer ID */}
-                <div
-                  style={{
-                    padding: '12px 14px',
-                    borderRadius: '10px',
-                    backgroundColor: 'rgba(39, 39, 42, 0.5)',
-                    border: '1px solid rgba(63, 63, 70, 0.3)',
-                  }}
-                >
-                  <p style={{ fontSize: '11px', fontWeight: 600, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
-                    ID Comprador
-                  </p>
-                  <p style={{ fontSize: '14px', fontWeight: 600, color: '#e4e4e7', margin: '4px 0 0 0', fontFamily: "'JetBrains Mono', monospace" }}>
-                    #{order.buyer.id || '—'}
-                  </p>
+                <div style={{ padding: '10px 12px', backgroundColor: 'rgba(39, 39, 42, 0.6)', borderRadius: '8px' }}>
+                  <p style={{ fontSize: '10px', color: '#71717a', fontWeight: 600, textTransform: 'uppercase', margin: 0 }}>ID Comprador</p>
+                  <p style={{ fontSize: '14px', color: '#e4e4e7', fontWeight: 600, margin: '4px 0 0 0', fontFamily: 'monospace' }}>#{order.buyer.id}</p>
                 </div>
               </div>
             </div>

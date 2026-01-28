@@ -5,6 +5,7 @@ import authService from '../services/auth.service';
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
+  isInitialized: boolean; // Flag para saber si ya se intentó restaurar la sesión
   setUser: (user: User | null) => void;
   logout: () => void;
   initAuth: () => void;
@@ -13,14 +14,15 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
+  isInitialized: false,
 
   // Establecer usuario
   setUser: (user) => {
     if (user) {
       authService.setUser(user);
-      set({ user, isAuthenticated: true });
+      set({ user, isAuthenticated: true, isInitialized: true });
     } else {
-      set({ user: null, isAuthenticated: false });
+      set({ user: null, isAuthenticated: false, isInitialized: true });
     }
   },
 
@@ -30,11 +32,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user: null, isAuthenticated: false });
   },
 
-  // Inicializar autenticación desde sessionStorage
+  // Inicializar autenticación desde localStorage
   initAuth: () => {
     const user = authService.getUser();
     if (user) {
-      set({ user, isAuthenticated: true });
+      set({ user, isAuthenticated: true, isInitialized: true });
+    } else {
+      set({ isInitialized: true }); // Marcar como inicializado aunque no haya usuario
     }
   },
 }));

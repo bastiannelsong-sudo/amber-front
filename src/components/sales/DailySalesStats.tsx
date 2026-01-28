@@ -9,7 +9,18 @@ interface Props {
     cross_docking: LogisticTypeSummary;
     other: LogisticTypeSummary;
   };
-  cancelledAmount: number; // Sum of cancelled/refunded orders (shown as negative)
+  cancelledAmount: number; // Sum of pure cancelled orders
+  cancelledCount: number; // Number of pure cancelled orders
+  mediationAmount: number; // Sum of orders in mediation
+  mediationCount: number; // Number of orders in mediation
+  refundedAmount: number; // Sum of refunded/returned orders
+  refundedCount: number; // Number of refunded/returned orders
+  totalInactiveAmount: number; // Total of all inactive (cancelled + mediation + refunded)
+  // Shipping calculations (from filtered orders)
+  shippingNet: number; // Net shipping result: income + bonus - Fazt - ML cost
+  shippingIncome: number; // Shipping income from Flex orders (buyer pays)
+  flexShippingCost: number; // Fazt courier cost for Flex orders
+  shippingBonus: number; // ML bonification for free shipping >$20k orders
 }
 
 // Animated Counter - extracted for reuse and memoization
@@ -374,16 +385,55 @@ const LogisticCard: FC<LogisticCardProps> = memo(({ type, data }) => {
           Desglose de costos
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          {/* Shipping */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.75rem', color: '#38bdf8', fontFamily: "'Outfit', sans-serif", fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#38bdf8' }} />
-              Envío
-            </span>
-            <span style={{ fontSize: '0.75rem', color: '#38bdf8', fontFamily: "'Outfit', sans-serif", fontWeight: 600 }}>
-              ${(data.shipping_cost || 0).toLocaleString('es-CL')}
-            </span>
-          </div>
+          {/* Flex: shipping_cost is INCOME (buyer pays), show Fazt as cost */}
+          {type === 'cross_docking' ? (
+            <>
+              {(data.shipping_cost || 0) > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#10b981', fontFamily: "'Outfit', sans-serif", fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+                    Ingreso envío
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: '#10b981', fontFamily: "'Outfit', sans-serif", fontWeight: 600 }}>
+                    +${(data.shipping_cost || 0).toLocaleString('es-CL')}
+                  </span>
+                </div>
+              )}
+              {(data.shipping_bonus || 0) > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#10b981', fontFamily: "'Outfit', sans-serif", fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+                    Bonif. ML
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: '#10b981', fontFamily: "'Outfit', sans-serif", fontWeight: 600 }}>
+                    +${(data.shipping_bonus || 0).toLocaleString('es-CL')}
+                  </span>
+                </div>
+              )}
+              {(data.flex_shipping_cost || 0) > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#38bdf8', fontFamily: "'Outfit', sans-serif", fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#38bdf8' }} />
+                    Fazt
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: '#38bdf8', fontFamily: "'Outfit', sans-serif", fontWeight: 600 }}>
+                    -${(data.flex_shipping_cost || 0).toLocaleString('es-CL')}
+                  </span>
+                </div>
+              )}
+            </>
+          ) : (
+            /* Full/Centro: shipping_cost is a COST (ML charges seller) */
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.75rem', color: '#38bdf8', fontFamily: "'Outfit', sans-serif", fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#38bdf8' }} />
+                Envío
+              </span>
+              <span style={{ fontSize: '0.75rem', color: '#38bdf8', fontFamily: "'Outfit', sans-serif", fontWeight: 600 }}>
+                ${(data.shipping_cost || 0).toLocaleString('es-CL')}
+              </span>
+            </div>
+          )}
           {/* Commission */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.75rem', color: '#fb7185', fontFamily: "'Outfit', sans-serif", fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -445,20 +495,8 @@ const LogisticCard: FC<LogisticCardProps> = memo(({ type, data }) => {
   );
 });
 
-const DailySalesStats: FC<Props> = ({ summary, byLogisticType, cancelledAmount }) => {
+const DailySalesStats: FC<Props> = ({ summary, byLogisticType, cancelledAmount, cancelledCount, mediationAmount, mediationCount, refundedAmount, refundedCount, totalInactiveAmount, shippingNet, shippingIncome, flexShippingCost, shippingBonus }) => {
   const profitMarginText = useMemo(() => `${summary.average_profit_margin.toFixed(1)}% margen`, [summary.average_profit_margin]);
-
-  // Calculate actual shipping costs vs income
-  // Flex shipping = INCOME (positive, green in table)
-  // Full/Centro shipping = COST (negative, shown as cost in table)
-  const shippingCalculation = useMemo(() => {
-    const flexIncome = byLogisticType.cross_docking.shipping_cost || 0; // Flex = income
-    const fulfillmentCost = byLogisticType.fulfillment.shipping_cost || 0; // Full = cost
-    const otherCost = byLogisticType.other.shipping_cost || 0; // Centro de Envío = cost
-    const actualCost = fulfillmentCost + otherCost; // Only these are real costs
-    const netShipping = flexIncome - actualCost; // Positive = net income, Negative = net cost
-    return { flexIncome, actualCost, netShipping };
-  }, [byLogisticType]);
 
   return (
     <div style={{ marginBottom: 'clamp(20px, 4vw, 32px)' }}>
@@ -482,31 +520,57 @@ const DailySalesStats: FC<Props> = ({ summary, byLogisticType, cancelledAmount }
         <StatCard
           icon={<HiCurrencyDollar style={{ width: '22px', height: '22px', color: '#10b981' }} />}
           label="Ventas Brutas"
-          value={summary.gross_amount}
+          value={summary.gross_amount + totalInactiveAmount}
           prefix="$"
           subtitle="Total para SII"
           accentColor="#10b981"
           glowColor="rgba(16, 185, 129, 0.4)"
         />
-        {cancelledAmount > 0 && (
+        {cancelledCount > 0 && (
           <StatCard
             icon={<HiRefresh style={{ width: '22px', height: '22px', color: '#f43f5e' }} />}
-            label="Devoluciones"
+            label="Canceladas"
             value={cancelledAmount}
             prefix="-$"
-            subtitle="Canceladas/Reembolsos"
+            subtitle={`${cancelledCount} ${cancelledCount === 1 ? 'orden cancelada' : 'órdenes canceladas'}`}
             accentColor="#f43f5e"
             glowColor="rgba(244, 63, 94, 0.4)"
           />
         )}
+        {mediationCount > 0 && (
+          <StatCard
+            icon={<HiRefresh style={{ width: '22px', height: '22px', color: '#fb923c' }} />}
+            label="Mediación"
+            value={mediationAmount}
+            prefix="-$"
+            subtitle={`${mediationCount} ${mediationCount === 1 ? 'orden en mediación' : 'órdenes en mediación'}`}
+            accentColor="#fb923c"
+            glowColor="rgba(251, 146, 60, 0.4)"
+          />
+        )}
+        {refundedCount > 0 && (
+          <StatCard
+            icon={<HiRefresh style={{ width: '22px', height: '22px', color: '#a78bfa' }} />}
+            label="Devoluciones"
+            value={refundedAmount}
+            prefix="-$"
+            subtitle={`${refundedCount} ${refundedCount === 1 ? 'devolución' : 'devoluciones'}`}
+            accentColor="#a78bfa"
+            glowColor="rgba(167, 139, 250, 0.4)"
+          />
+        )}
         <StatCard
-          icon={<HiTruck style={{ width: '22px', height: '22px', color: shippingCalculation.netShipping >= 0 ? '#10b981' : '#f43f5e' }} />}
-          label="Costos Envío"
-          value={Math.abs(shippingCalculation.netShipping)}
-          prefix={shippingCalculation.netShipping >= 0 ? '+$' : '-$'}
-          subtitle={shippingCalculation.netShipping >= 0 ? 'Ingreso neto (Flex)' : 'Costo neto'}
-          accentColor={shippingCalculation.netShipping >= 0 ? '#10b981' : '#f43f5e'}
-          glowColor={shippingCalculation.netShipping >= 0 ? 'rgba(16, 185, 129, 0.4)' : 'rgba(244, 63, 94, 0.4)'}
+          icon={<HiTruck style={{ width: '22px', height: '22px', color: shippingNet >= 0 ? '#10b981' : '#f43f5e' }} />}
+          label="Envío Neto"
+          value={Math.abs(shippingNet)}
+          prefix={shippingNet >= 0 ? '+$' : '-$'}
+          subtitle={[
+            shippingIncome > 0 ? `+$${shippingIncome.toLocaleString('es-CL')} ingreso` : '',
+            shippingBonus > 0 ? `+$${shippingBonus.toLocaleString('es-CL')} bonif.` : '',
+            flexShippingCost > 0 ? `-$${flexShippingCost.toLocaleString('es-CL')} Fazt` : '',
+          ].filter(Boolean).join(' ') || 'Sin costos de envío'}
+          accentColor={shippingNet >= 0 ? '#10b981' : '#f43f5e'}
+          glowColor={shippingNet >= 0 ? 'rgba(16, 185, 129, 0.4)' : 'rgba(244, 63, 94, 0.4)'}
         />
         <StatCard
           icon={<HiReceiptTax style={{ width: '22px', height: '22px', color: '#f43f5e' }} />}
